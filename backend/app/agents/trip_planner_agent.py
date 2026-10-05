@@ -18,6 +18,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.config import settings
+from app.core.errors import ItineraryGenerationError
 from app.models.schemas import Itinerary, TripEditRequest, TripPlanRequest
 
 logger = logging.getLogger(__name__)
@@ -180,7 +181,7 @@ class TripPlannerAgent:
                 return data
             except Exception as e:
                 logger.warning(f"LLM 输出解析失败（第{attempt+1}次）: {e}")
-        raise ValueError("LLM 多次输出无效 JSON，请重试")
+        raise ItineraryGenerationError("LLM 多次输出无效 JSON，请重试")
 
 
 # 模块级单例：全项目共用一个 agent（避免重复建连接）

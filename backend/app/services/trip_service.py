@@ -12,7 +12,8 @@ import uuid
 
 from app.agents.trip_planner_agent import planner_agent
 from app.agents.tools import rag_tool
-from app.models.schemas import PlanResponse, TripEditRequest, TripPlanRequest
+from app.core.errors import TripNotFoundError, UnsupportedDestinationError
+from app.models.schemas import BudgetBreakdown, PlanResponse, TripEditRequest, TripPlanRequest
 from app.rag import retriever
 from app.services import (
     city_resolver_service,
@@ -23,6 +24,26 @@ from app.services import (
 )
 
 logger = logging.getLogger(__name__)
+
+# 和值偏差在 ±5% 内视为合理：LLM 估算本就不精确，不值得为此改动用户的数
+BUDGET_TOLERANCE = 0.05
+
+
+def normalize_budget(raw: dict | None, total: float) -> dict:
+    """把预算拆分校准成「五项之和 ≈ 用户总预算」的确定值。
+
+    为什么需要：LLM 给的五项之和经常与用户填的总预算对不上（漏项、凑数），
+    直接展示会让用户以为系统算错了。这里做一次确定性校准：
+      和值为 0 或总预算非正 → 原样返回；偏差在容差内 → 只四舍五入；
+      超出容差 → 按比例整体缩放，且和值精确等于总预算。
+    """
+    breakdown = BudgetBreakdown.from_raw(raw)
+    current = breakdown.total
+    if current <= 0 or not total or total <= 0:
+        return breakdown.as_dict()
+    if abs(current - total) / total <= BUDGET_TOLERANCE:
+        return breakdown.as_dict()
+    return breakdown.scaled_to(total)
 
 
 def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
@@ -38,7 +59,7 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
     req.destination = city
 
     if level == "D":
-        raise ValueError(f"{reason}：请选择具体城市（如：大理、西安、成都）")
+        raise UnsupportedDestinationError(f"{reason}：请选择具体城市（如：大理、西安、成都）")
 
     # 2. 按等级准备生成上下文（攻略片段 / 候选池 / 空）
     context, sources = extra_context, []
@@ -94,7 +115,11 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
             elif "晴" in text and int(cast.get("daytemp", 0) or 0) >= 30:
                 tips.append(f"{cast.get('date', '')} 晴天高温，注意防晒补水")
 
-    # 6. 组装响应（含本次请求的 token 分项统计）
+    # 6. 预算校准：LLM 给的五项之和常与用户总预算对不上，按比例校准后再返回
+    budget_split = normalize_budget(itinerary.get("budget_split"), req.budget)
+    itinerary["budget_split"] = budget_split
+
+    # 7. 组装响应（含本次请求的 token 分项统计）
     token_usage = token_tracker.diff(before, token_tracker.snapshot())
     # Token 观测：终端同步打印本次消耗
     logger.info(f"Token 本次请求: { {p: d['total'] for p, d in token_usage.items() if d['total']} }")
@@ -102,7 +127,7 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
         trip_id=uuid.uuid4().hex,
         destination=city,
         itinerary=itinerary,
-        budget_split=itinerary.get("budget_split", {}),
+        budget_split=budget_split,
         weather=weather,
         sources=sources,
         token_usage=token_usage,
@@ -162,7 +187,7 @@ def edit_trip(trip_id: str, req: TripEditRequest) -> PlanResponse:
 
     record = storage_service.get_trip(trip_id)
     if record is None:
-        raise ValueError("行程不存在")
+        raise TripNotFoundError("行程不存在")
 
     current = storage_service.to_record_out(record)["itinerary"]
     destination = current.get("destination", record.destination)

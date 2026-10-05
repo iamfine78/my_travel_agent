@@ -20,13 +20,14 @@ router = APIRouter()
 
 @router.post("/plan", response_model=PlanResponse, summary="生成旅行规划")
 def plan_trip(req: TripPlanRequest):
-    """调用 LLM（+RAG/高德候选池）生成结构化行程。"""
+    """调用 LLM（+RAG/高德候选池）生成结构化行程。
+
+    业务失败（如省级输入）由 trip_service 抛 PlanningError，
+    在 api/main.py 统一映射成 HTTP 响应，这里不必再 catch。
+    """
     from app.services import trip_service
 
-    try:
-        return trip_service.plan_trip(req)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return trip_service.plan_trip(req)
 
 
 @router.post("/{trip_id}/edit", response_model=PlanResponse, summary="自然语言编辑行程")
@@ -34,10 +35,7 @@ def edit_trip(trip_id: str, req: TripEditRequest):
     """用一句话修改某天的行程。"""
     from app.services import trip_service
 
-    try:
-        return trip_service.edit_trip(trip_id, req)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return trip_service.edit_trip(trip_id, req)
 
 
 @router.post("/{trip_id}/refresh", response_model=TripRecordOut, summary="补全旧行程的地理信息")

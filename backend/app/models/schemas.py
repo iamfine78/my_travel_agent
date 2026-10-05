@@ -8,7 +8,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ---------- 请求模型 ----------
@@ -65,6 +65,60 @@ class ItineraryDay(BaseModel):
     meals: list[str] = Field(default_factory=list, description="餐饮建议")
     lodging: str = Field("", description="当天住宿安排：建议住哪个区域/酒店类型及理由")
     note: str = Field("", description="当日小贴士")
+
+
+class BudgetBreakdown(BaseModel):
+    """预算拆分：五个分项。
+
+    与「行程 JSON 里的 budget_split 是 dict」并不矛盾：
+    对外的形状仍是这五个键的普通字典（前端直接用），
+    这里是把 LLM 给的松散数据（字符串/缺项/负数/总和不对）收拢成确定值的模型。
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    transport: float = 0.0   # 交通
+    lodging: float = 0.0     # 住宿
+    food: float = 0.0        # 餐饮
+    tickets: float = 0.0     # 门票
+    other: float = 0.0       # 其他
+
+    @classmethod
+    def from_raw(cls, raw: dict | None) -> "BudgetBreakdown":
+        """宽松解析：字符串 / None / 负数一律按 0，缺项补 0（LLM 输出不可信）。"""
+        parsed = {}
+        for key in cls.model_fields:
+            try:
+                parsed[key] = max(float((raw or {}).get(key) or 0), 0.0)
+            except (TypeError, ValueError):
+                parsed[key] = 0.0
+        return cls(**parsed)
+
+    @property
+    def total(self) -> float:
+        return round(sum(self.as_dict().values()), 2)
+
+    def as_dict(self) -> dict:
+        # 用 type(self).model_fields：Pydantic 2.11 起不推荐在实例上取该属性
+        return {key: round(getattr(self, key), 2) for key in type(self).model_fields}
+
+    def scaled_to(self, target: float) -> dict:
+        """按现有比例缩放到 target 总额。
+
+        四舍五入产生的零头补到最大的一项上，保证五项之和精确等于 target
+        —— 前端与导出的合计才不会出现「差 1 元」的观感问题。
+        """
+        current = self.total
+        if current <= 0 or target <= 0:
+            return self.as_dict()
+
+        factor = target / current
+        scaled = {key: round(value * factor, 2) for key, value in self.as_dict().items()}
+        drift = round(target - sum(scaled.values()), 2)
+        if drift:
+            biggest = max(scaled, key=scaled.get)
+            scaled[biggest] = round(scaled[biggest] + drift, 2)
+        return scaled
 
 
 class Itinerary(BaseModel):

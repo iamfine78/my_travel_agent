@@ -8,10 +8,12 @@
 # ============================================
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.core.errors import PlanningError
 from app.services import storage_service
 
 
@@ -43,6 +45,15 @@ from app.api.routes import export, trip, weather  # noqa: E402
 app.include_router(trip.router, prefix="/api/trip", tags=["行程"])
 app.include_router(export.router, prefix="/api/export", tags=["导出"])
 app.include_router(weather.router, prefix="/api/weather", tags=["天气"])
+
+
+@app.exception_handler(PlanningError)
+async def planning_error_handler(request: Request, exc: PlanningError) -> JSONResponse:
+    """业务异常统一映射：状态码取自异常类，文案原样返回。
+
+    有了它，各路由不必再写 try/except ValueError → HTTPException。
+    """
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
 @app.get("/api/health")
