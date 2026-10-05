@@ -1,0 +1,15 @@
+# 构建上下文瘦身
+node_modules/
+dist/
+.preview/
+
+# 注意：这里【不】排除 .env
+# Vite 在构建期读取 frontend/.env 把 VITE_AMAP_* 内联进产物，
+# 排除它会导致构建出的地图缺 Key。该 Key 本就是浏览器端 Key，无法真正保密，
+# 防护依赖高德控制台的域名白名单与定期轮换（见 Dockerfile 顶部说明）。
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

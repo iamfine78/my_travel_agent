@@ -1,0 +1,26 @@
+# 构建上下文瘦身 + 防止把本机密钥/数据打进镜像
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 密钥：由 compose 的 env_file 在运行时注入，绝不进镜像
+.env
+.env.*
+
+# 运行时可重新生成的产物（compose 会挂载宿主机的 data/）
+data/chroma_db/
+data/*.db
+*.sqlite3
+
+# 测试与临时调试产物
+tests/
+scripts/_*
+*.log
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
