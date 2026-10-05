@@ -118,6 +118,17 @@ class TestAdcodeFiltering:
         assert pcs._adcode_ok("110000", "110101") is True   # 北京市 vs 东城区
         assert pcs._adcode_ok("110000", "120101") is False  # 北京 vs 天津
 
+    def test_county_level_city_compares_full_code(self):
+        """回归：县级市「大理市」与州内「洱源县」前 4 位都是 5329，
+        只比 4 位会让跨城过滤失效——必须比完整 6 位。"""
+        assert pcs._adcode_ok("532901", "532901") is True    # 大理市自身
+        assert pcs._adcode_ok("532901", "532930") is False   # 大理市 vs 洱源县
+
+    def test_prefecture_still_compares_four_digits(self):
+        # 自治州（末两位 00）保持 4 位比较，下辖各区县都算同城
+        assert pcs._adcode_ok("532900", "532901") is True    # 大理州 vs 大理市
+        assert pcs._adcode_ok("532900", "532930") is True    # 大理州 vs 洱源县
+
     @pytest.mark.parametrize("target,poi", [
         ("", "610103"),          # 没有目标码
         ("610100", ""),          # POI 没有码

@@ -58,7 +58,7 @@ $env:RUN_LIVE_TESTS=1; .venv/Scripts/python.exe -X utf8 -m pytest backend -m liv
 
 1. **城市四级分流** `city_resolver_service.resolve_city` — 先用 `guide_catalog` 注册表规范化城市名（含别名/行政后缀），再由高德行政区接口判定：
    - **A 级**（6 个沉淀城市，有攻略）→ Query Rewrite → Chroma 检索 + LLM 精排 → 攻略增强生成
-   - **B 级**（动态城市）→ 高德 POI 候选池 → LLM 只能输出池内 POI ID → **池外校验拒绝（防幻觉核心）**。候选池的跨城过滤优先按 **adcode** 判定（`place_candidate_service._adcode_ok`：普通市比前 4 位、直辖市比前 2 位），POI 无 adcode 时回退城市名包含
+   - **B 级**（动态城市）→ 高德 POI 候选池 → LLM 只能输出池内 POI ID → **池外校验拒绝（防幻觉核心）**。候选池的跨城过滤优先按 **adcode** 判定（`place_candidate_service._adcode_ok`：直辖市比前 2 位、地级市/州比前 4 位、县级市比完整 6 位），POI 无 adcode 时回退城市名包含。**注意**：目标 adcode 由 `city_resolver_service` 解析，其中 `_pick_city_district` 必须挑与输入同名的**城市**条目——高德对「西安」会先返回吉林的「西安区」，盲取第一条会把城市判成不存在
    - **C 级**（资料不足）→ LLM 通用知识兜底，如实标注来源
    - **D 级**（省级输入）→ 直接拒绝，提示选具体城市
 2. **LLM 生成** `agents/trip_planner_agent.py` — 输出严格 JSON，Pydantic `Itinerary` 校验；`mode="dynamic"` 时注入 POI ID 白名单约束

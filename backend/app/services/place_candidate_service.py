@@ -33,15 +33,23 @@ _MUNICIPALITY_PREFIXES = {"11", "12", "31", "50"}
 def _adcode_ok(target_adcode: str, poi_adcode: str) -> bool:
     """两个 adcode 是否属于同一城市。
 
-    普通地级市比前 4 位（西安 610100 vs 碑林区 610103 → 都是 6101）；
-    直辖市比前 2 位（北京 110000 vs 东城区 110101 → 都是 11）。
+    比较粒度按目标区划的层级定（高德编码：前 2 位省、前 4 位地级、6 位县级）：
+      - 直辖市（110000 / 310000…）        → 比前 2 位
+      - 地级市 / 自治州（610100、532900） → 比前 4 位
+      - 县级市 / 区（532901 大理市）      → 比完整 6 位
+        否则「大理市」与州内「洱源县」前 4 位都是 5329，会一并放行，
+        跨城过滤就形同虚设。
+
     任一侧编码缺失或格式异常 → True：判不了就不筛，交给字符串兜底。
     """
     t, p = str(target_adcode or ""), str(poi_adcode or "")
     if len(t) < 6 or len(p) < 6 or not (t.isdigit() and p.isdigit()):
         return True
-    prefix = 2 if t[:2] in _MUNICIPALITY_PREFIXES else 4
-    return t[:prefix] == p[:prefix]
+    if t[:2] in _MUNICIPALITY_PREFIXES:
+        return t[:2] == p[:2]
+    if t[4:] == "00":          # 地级市 / 自治州
+        return t[:4] == p[:4]
+    return t == p              # 县级市 / 区：必须完全一致
 
 
 def _belongs_to_city(city: str, target_adcode: str, poi: dict) -> bool:

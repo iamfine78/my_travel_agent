@@ -105,13 +105,106 @@ class TestResolveCity:
         assert r["city"] == "成都"
 
     def test_level_b_dynamic_city(self, monkeypatch):
-        monkeypatch.setattr(resolver, "_amap_district", lambda city: ("532900", True))
+        monkeypatch.setattr(resolver, "_amap_district", lambda city: resolver.DistrictResult("532901", True))
         r = resolver.resolve_city("大理")
         assert r["level"] == "B"
         assert r["city"] == "大理"
-        assert r["adcode"] == "532900"
+        assert r["adcode"] == "532901"
 
     def test_level_c_insufficient_data(self, monkeypatch):
-        monkeypatch.setattr(resolver, "_amap_district", lambda city: ("", False))
+        monkeypatch.setattr(resolver, "_amap_district", lambda city: resolver.DistrictResult("", False))
         r = resolver.resolve_city("桃花源")
         assert r["level"] == "C"
+        assert "资料不足" in r["reason"]
+
+    def test_amap_failure_is_reported_as_failure_not_missing(self, monkeypatch):
+        """回归：高德调用失败曾与「确实查不到」返回同一个结果，
+        真实城市会被静默说成资料不足（实测漏过咸阳）。"""
+        monkeypatch.setattr(resolver, "_amap_district", lambda city: resolver.DistrictResult("", False, failed=True))
+        r = resolver.resolve_city("咸阳")
+        assert r["level"] == "C"
+        assert "高德查询失败" in r["reason"]
+        assert "资料不足" not in r["reason"]
+
+
+class TestDistrictRequest:
+    """回归：高德用 HTTP 200 + status=0 表达限流/鉴权错误，
+    只看 HTTP 状态码会把它误读成「城市查不到」。"""
+
+    class _Resp:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._payload
+
+    @pytest.mark.parametrize("payload", [
+        {"status": "0", "info": "DAILY_QUERY_OVER_LIMIT"},
+        {"status": "0", "info": "INVALID_USER_KEY"},
+        {"info": "OK"},                     # 缺 status 字段
+    ])
+    def test_business_error_status_is_a_failure(self, monkeypatch, payload):
+        monkeypatch.setattr(resolver.httpx, "get", lambda *a, **k: self._Resp(payload))
+        monkeypatch.setattr(resolver.time, "sleep", lambda *_: None)
+        assert resolver._district_request("丽江") is None
+
+    def test_success_returns_payload(self, monkeypatch):
+        payload = {"status": "1", "info": "OK", "districts": [{"name": "丽江市"}]}
+        monkeypatch.setattr(resolver.httpx, "get", lambda *a, **k: self._Resp(payload))
+        assert resolver._district_request("丽江") is payload
+
+    def test_network_error_retries_once(self, monkeypatch):
+        calls = []
+
+        def boom(*a, **k):
+            calls.append(1)
+            raise RuntimeError("network down")
+
+        monkeypatch.setattr(resolver.httpx, "get", boom)
+        monkeypatch.setattr(resolver.time, "sleep", lambda *_: None)
+        assert resolver._district_request("丽江") is None
+        assert len(calls) == 2, "应重试一次再放弃"
+
+
+class TestPickCityDistrict:
+    """回归：高德对同一关键词会返回多条同名区县，不能盲取 districts[0]。"""
+
+    def test_picks_real_city_over_same_named_districts(self):
+        # 高德查「西安」的真实返回：两条吉林/黑龙江的「西安区」在前，「西安市」在后
+        districts = [
+            {"name": "西安区", "adcode": "220403", "level": "district"},
+            {"name": "西安区", "adcode": "231005", "level": "district"},
+            {"name": "西安市", "adcode": "610100", "level": "city"},
+        ]
+        assert resolver._pick_city_district(districts, "西安")["adcode"] == "610100"
+
+    def test_prefers_city_over_prefecture(self):
+        # 「大理」应先取「大理市」(532901)，而不是「大理白族自治州」(532900)，
+        # 否则 adcode 过滤会放行州内其他县
+        districts = [
+            {"name": "大理白族自治州", "adcode": "532900", "level": "city"},
+            {"name": "大理市", "adcode": "532901", "level": "district"},
+        ]
+        assert resolver._pick_city_district(districts, "大理")["adcode"] == "532901"
+
+    def test_falls_back_to_prefecture_when_no_same_named_city(self):
+        # 「阿坝」没有同名市，退回州级
+        districts = [{"name": "阿坝藏族羌族自治州", "adcode": "513200", "level": "city"}]
+        assert resolver._pick_city_district(districts, "阿坝")["adcode"] == "513200"
+
+    def test_tolerates_input_with_admin_suffix(self):
+        # 输入本身带后缀时，靠"去后缀比较"兜住（仅限城市级条目）
+        districts = [{"name": "大理白族自治州", "adcode": "532900", "level": "city"}]
+        assert resolver._pick_city_district(districts, "大理白族自治州")["adcode"] == "532900"
+
+    def test_returns_none_for_empty_or_unknown(self):
+        assert resolver._pick_city_district([], "西安") is None
+
+    def test_never_picks_county_level_entry_as_city(self):
+        """只有区县级同名条目时，不能把它当成城市 —— 这正是「西安」被误判的根因。"""
+        only_districts = [{"name": "西安区", "adcode": "220403", "level": "district"}]
+        assert resolver._pick_city_district(only_districts, "西安") is None
+        # 但同时要保证：有真正的「西安市」时能选中它（见上一条用例）
