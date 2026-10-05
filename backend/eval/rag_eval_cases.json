@@ -4,125 +4,504 @@
     "city": "西安",
     "category": "景点",
     "query": "西安有哪些必去的景点，第一次去玩几天合适？",
-    "expected_terms": ["兵马俑", "城墙", "大雁塔"]
+    "expected_terms": [
+      "兵马俑",
+      "城墙",
+      "大雁塔"
+    ]
   },
   {
     "id": "xian-2",
     "city": "西安",
     "category": "美食",
     "query": "西安有什么地道小吃和美食街推荐？",
-    "expected_terms": ["肉夹馍", "回民街", "凉皮"]
+    "expected_terms": [
+      "肉夹馍",
+      "回民街",
+      "凉皮"
+    ]
   },
   {
     "id": "xian-3",
     "city": "西安",
     "category": "行程",
     "query": "西安三天两晚的行程怎么安排，预算大概多少？",
-    "expected_terms": ["兵马俑", "华清宫", "行程"]
+    "expected_terms": [
+      "兵马俑",
+      "华清宫",
+      "行程"
+    ]
   },
   {
     "id": "chengdu-1",
     "city": "成都",
     "category": "景点",
     "query": "成都市区和周边有哪些好玩的地方？",
-    "expected_terms": ["大熊猫", "宽窄巷子", "都江堰"]
+    "expected_terms": [
+      "大熊猫",
+      "宽窄巷子",
+      "都江堰"
+    ]
   },
   {
     "id": "chengdu-2",
     "city": "成都",
     "category": "美食",
     "query": "成都火锅和串串哪家好，推荐几条美食路线？",
-    "expected_terms": ["火锅", "串串", "美食"]
+    "expected_terms": [
+      "火锅",
+      "串串",
+      "美食"
+    ]
   },
   {
     "id": "chengdu-3",
     "city": "成都",
     "category": "行程",
     "query": "成都周末两日游怎么规划比较轻松？",
-    "expected_terms": ["熊猫", "宽窄巷子", "两日"]
+    "expected_terms": [
+      "熊猫",
+      "宽窄巷子",
+      "两日"
+    ]
   },
   {
     "id": "beijing-1",
     "city": "北京",
     "category": "景点",
     "query": "北京故宫长城一日游怎么走最顺？",
-    "expected_terms": ["故宫", "长城", "天安门"]
+    "expected_terms": [
+      "故宫",
+      "长城",
+      "天安门"
+    ]
   },
   {
     "id": "beijing-2",
     "city": "北京",
     "category": "美食",
     "query": "北京烤鸭和胡同小吃有什么推荐？",
-    "expected_terms": ["烤鸭", "胡同", "小吃"]
+    "expected_terms": [
+      "烤鸭",
+      "胡同",
+      "小吃"
+    ]
   },
   {
     "id": "beijing-3",
     "city": "北京",
     "category": "行程",
     "query": "北京五天深度游行程安排",
-    "expected_terms": ["故宫", "颐和园", "天坛"]
+    "expected_terms": [
+      "故宫",
+      "颐和园",
+      "天坛"
+    ]
   },
   {
     "id": "shanghai-1",
     "city": "上海",
     "category": "景点",
     "query": "上海外滩陆家嘴的夜景怎么安排最好？",
-    "expected_terms": ["外滩", "陆家嘴", "夜景"]
+    "expected_terms": [
+      "外滩",
+      "陆家嘴",
+      "夜景"
+    ]
   },
   {
     "id": "shanghai-2",
     "city": "上海",
     "category": "美食",
     "query": "上海本帮菜有哪些必吃的老字号？",
-    "expected_terms": ["本帮菜", "南翔", "城隍庙"]
+    "expected_terms": [
+      "本帮菜",
+      "南翔",
+      "城隍庙"
+    ]
   },
   {
     "id": "shanghai-3",
     "city": "上海",
     "category": "行程",
     "query": "上海两日游经典路线推荐",
-    "expected_terms": ["外滩", "豫园", "迪士尼"]
+    "expected_terms": [
+      "外滩",
+      "豫园",
+      "迪士尼"
+    ]
   },
   {
     "id": "hangzhou-1",
     "city": "杭州",
     "category": "景点",
     "query": "杭州西湖周边有哪些值得去的景点？",
-    "expected_terms": ["西湖", "灵隐", "雷峰塔"]
+    "expected_terms": [
+      "西湖",
+      "灵隐",
+      "雷峰塔"
+    ]
   },
   {
     "id": "hangzhou-2",
     "city": "杭州",
     "category": "美食",
     "query": "杭州有什么特色菜和茶文化体验？",
-    "expected_terms": ["龙井", "东坡肉", "杭帮菜"]
+    "expected_terms": [
+      "龙井",
+      "东坡肉",
+      "杭帮菜"
+    ]
   },
   {
     "id": "hangzhou-3",
     "city": "杭州",
     "category": "行程",
     "query": "杭州三日游行程怎么排比较合理？",
-    "expected_terms": ["西湖", "千岛湖", "灵隐"]
+    "expected_terms": [
+      "西湖",
+      "千岛湖",
+      "灵隐"
+    ]
   },
   {
     "id": "chongqing-1",
     "city": "重庆",
     "category": "景点",
     "query": "重庆洪崖洞和解放碑晚上怎么逛？",
-    "expected_terms": ["洪崖洞", "解放碑", "夜景"]
+    "expected_terms": [
+      "洪崖洞",
+      "解放碑",
+      "夜景"
+    ]
   },
   {
     "id": "chongqing-2",
     "city": "重庆",
     "category": "美食",
     "query": "重庆火锅哪家最正宗，小面值得吃吗？",
-    "expected_terms": ["火锅", "小面", "美食"]
+    "expected_terms": [
+      "火锅",
+      "小面",
+      "美食"
+    ]
   },
   {
     "id": "chongqing-3",
     "city": "重庆",
     "category": "行程",
     "query": "重庆两天一夜的行程安排",
-    "expected_terms": ["洪崖洞", "磁器口", "李子坝"]
+    "expected_terms": [
+      "洪崖洞",
+      "磁器口",
+      "李子坝"
+    ]
+  },
+  {
+    "id": "xian-4",
+    "city": "西安",
+    "category": "景点",
+    "query": "兵马俑和华清宫能安排在同一天吗？",
+    "expected_terms": [
+      "兵马俑",
+      "华清宫"
+    ]
+  },
+  {
+    "id": "xian-5",
+    "city": "西安",
+    "category": "景点",
+    "query": "西安城墙值不值得上去骑自行车？",
+    "expected_terms": [
+      "城墙",
+      "骑行"
+    ]
+  },
+  {
+    "id": "xian-6",
+    "city": "西安",
+    "category": "美食",
+    "query": "西安有什么必吃的面食？",
+    "expected_terms": [
+      "油泼面",
+      "臊子面"
+    ]
+  },
+  {
+    "id": "xian-7",
+    "city": "西安",
+    "category": "美食",
+    "query": "羊肉泡馍怎么吃才地道？",
+    "expected_terms": [
+      "羊肉泡馍",
+      "泡馍"
+    ]
+  },
+  {
+    "id": "xian-8",
+    "city": "西安",
+    "category": "行程",
+    "query": "西安2天怎么安排不走回头路？",
+    "expected_terms": [
+      "兵马俑",
+      "城墙",
+      "大雁塔"
+    ]
+  },
+  {
+    "id": "chengdu-4",
+    "city": "成都",
+    "category": "景点",
+    "query": "成都大熊猫基地几点去能看到活跃的熊猫？",
+    "expected_terms": [
+      "大熊猫",
+      "熊猫"
+    ]
+  },
+  {
+    "id": "chengdu-5",
+    "city": "成都",
+    "category": "景点",
+    "query": "宽窄巷子和锦里哪个更值得逛？",
+    "expected_terms": [
+      "宽窄巷子",
+      "锦里"
+    ]
+  },
+  {
+    "id": "chengdu-6",
+    "city": "成都",
+    "category": "美食",
+    "query": "成都除了火锅还有什么小吃？",
+    "expected_terms": [
+      "串串香",
+      "钵钵鸡",
+      "冒菜"
+    ]
+  },
+  {
+    "id": "chengdu-7",
+    "city": "成都",
+    "category": "美食",
+    "query": "成都面食和小吃推荐",
+    "expected_terms": [
+      "担担面",
+      "钟水饺"
+    ]
+  },
+  {
+    "id": "chengdu-8",
+    "city": "成都",
+    "category": "行程",
+    "query": "成都带孩子玩3天怎么安排？",
+    "expected_terms": [
+      "大熊猫",
+      "宽窄巷子",
+      "人民公园"
+    ]
+  },
+  {
+    "id": "beijing-4",
+    "city": "北京",
+    "category": "景点",
+    "query": "故宫需要提前预约吗？周一能去吗？",
+    "expected_terms": [
+      "故宫",
+      "预约"
+    ]
+  },
+  {
+    "id": "beijing-5",
+    "city": "北京",
+    "category": "景点",
+    "query": "八达岭长城和颐和园一天能逛完吗？",
+    "expected_terms": [
+      "八达岭",
+      "颐和园"
+    ]
+  },
+  {
+    "id": "beijing-6",
+    "city": "北京",
+    "category": "美食",
+    "query": "北京烤鸭哪家性价比高？",
+    "expected_terms": [
+      "烤鸭",
+      "四季民福"
+    ]
+  },
+  {
+    "id": "beijing-7",
+    "city": "北京",
+    "category": "美食",
+    "query": "北京有哪些地道小吃？",
+    "expected_terms": [
+      "豆汁",
+      "驴打滚",
+      "爆肚"
+    ]
+  },
+  {
+    "id": "beijing-8",
+    "city": "北京",
+    "category": "行程",
+    "query": "北京4天人文行程怎么安排？",
+    "expected_terms": [
+      "故宫",
+      "八达岭",
+      "天坛"
+    ]
+  },
+  {
+    "id": "shanghai-4",
+    "city": "上海",
+    "category": "景点",
+    "query": "外滩和陆家嘴怎么安排看夜景？",
+    "expected_terms": [
+      "外滩",
+      "陆家嘴"
+    ]
+  },
+  {
+    "id": "shanghai-5",
+    "city": "上海",
+    "category": "景点",
+    "query": "上海迪士尼一天够玩吗？",
+    "expected_terms": [
+      "迪士尼"
+    ]
+  },
+  {
+    "id": "shanghai-6",
+    "city": "上海",
+    "category": "美食",
+    "query": "上海本帮菜有什么推荐？",
+    "expected_terms": [
+      "本帮菜",
+      "红烧肉",
+      "油爆虾"
+    ]
+  },
+  {
+    "id": "shanghai-7",
+    "city": "上海",
+    "category": "美食",
+    "query": "上海生煎和小笼包哪家好？",
+    "expected_terms": [
+      "小笼包",
+      "生煎"
+    ]
+  },
+  {
+    "id": "shanghai-8",
+    "city": "上海",
+    "category": "行程",
+    "query": "上海亲子4天怎么安排？",
+    "expected_terms": [
+      "迪士尼",
+      "外滩",
+      "豫园"
+    ]
+  },
+  {
+    "id": "hangzhou-4",
+    "city": "杭州",
+    "category": "景点",
+    "query": "西湖一天怎么逛比较轻松？",
+    "expected_terms": [
+      "西湖"
+    ]
+  },
+  {
+    "id": "hangzhou-5",
+    "city": "杭州",
+    "category": "景点",
+    "query": "灵隐寺和雷峰塔值得去吗？",
+    "expected_terms": [
+      "灵隐寺",
+      "雷峰塔"
+    ]
+  },
+  {
+    "id": "hangzhou-6",
+    "city": "杭州",
+    "category": "美食",
+    "query": "杭州有什么必吃的杭帮菜？",
+    "expected_terms": [
+      "西湖醋鱼",
+      "东坡肉",
+      "龙井虾仁"
+    ]
+  },
+  {
+    "id": "hangzhou-7",
+    "city": "杭州",
+    "category": "美食",
+    "query": "杭州龙井茶去哪买比较靠谱？",
+    "expected_terms": [
+      "龙井"
+    ]
+  },
+  {
+    "id": "hangzhou-8",
+    "city": "杭州",
+    "category": "行程",
+    "query": "杭州3天自然风光行程怎么排？",
+    "expected_terms": [
+      "西湖",
+      "西溪",
+      "龙井"
+    ]
+  },
+  {
+    "id": "chongqing-4",
+    "city": "重庆",
+    "category": "景点",
+    "query": "洪崖洞几点去拍照最好？",
+    "expected_terms": [
+      "洪崖洞"
+    ]
+  },
+  {
+    "id": "chongqing-5",
+    "city": "重庆",
+    "category": "景点",
+    "query": "李子坝轻轨穿楼和长江索道怎么安排？",
+    "expected_terms": [
+      "李子坝",
+      "长江索道"
+    ]
+  },
+  {
+    "id": "chongqing-6",
+    "city": "重庆",
+    "category": "美食",
+    "query": "重庆火锅哪家好吃，微辣辣不辣？",
+    "expected_terms": [
+      "火锅",
+      "德庄",
+      "周师兄"
+    ]
+  },
+  {
+    "id": "chongqing-7",
+    "city": "重庆",
+    "category": "美食",
+    "query": "重庆小面和酸辣粉推荐",
+    "expected_terms": [
+      "小面",
+      "酸辣粉"
+    ]
+  },
+  {
+    "id": "chongqing-8",
+    "city": "重庆",
+    "category": "行程",
+    "query": "重庆3天魔幻行程怎么安排？",
+    "expected_terms": [
+      "洪崖洞",
+      "李子坝",
+      "解放碑"
+    ]
   }
 ]

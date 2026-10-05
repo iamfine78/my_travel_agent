@@ -33,14 +33,16 @@ pythonProject2/
 │   │   ├── models/       # Pydantic 请求响应模型、SQLAlchemy 表
 │   │   ├── rag/          # 攻略目录、Chroma 入库检索、精排、一致性校验
 │   │   ├── services/     # 行程编排、城市分级、高德、天气、存储、缓存、导出
+│   │   ├── core/         # 业务异常体系（PlanningError 及子类）
 │   │   └── config.py     # 全局配置（读 .env）
 │   ├── data/             # 6 城攻略 md、检索规则、Chroma / SQLite（运行时生成）
 │   ├── eval/             # RAG 评估样例集
 │   └── scripts/          # 入库、调试、评估脚本
 ├── frontend/src/         # Home / Result / History 三页面 + 高德地图组件
 ├── docs/                 # 项目文档
-├── docker-compose.yaml   # 编排（注意：Dockerfile 尚未提供）
-└── start.ps1             # Windows 一键启动脚本
+├── docker-compose.yaml   # 一键编排前端 + 后端 + Redis（含两个 Dockerfile）
+├── start.ps1             # Windows 本地启动脚本
+└── start.sh              # Linux / macOS 本地启动脚本
 ```
 
 ## 快速开始
@@ -50,19 +52,22 @@ pythonProject2/
 - Python 3.10+（开发环境实测 3.14）
 - Node.js 18+（实测 24）
 - Redis（Windows 可用原生版；也可用 docker-compose 的 redis 服务）
-- [高德开放平台](https://lbs.amap.com/) 个人开发者 Key（Web 服务 Key + Web 端 JS Key 各一个）
+- [高德开放平台](https://lbs.amap.com/) 个人开发者 Key：**Web 服务 Key**（后端）+ **Web 端 JS Key 及其安全密钥**（前端）
+- 有 Docker 时可跳过 Python/Node/Redis 的手工安装，直接看「方式 B」
 
 ### 1. 配置环境变量
 
-复制模板并填写：
+前后端各有一份，都要填：
 
 ```bash
-cp backend/.env.example backend/.env
+cp backend/.env.example backend/.env     # 后端：deepseek / 高德 Web Key / 向量化 / 精排
+cp frontend/.env.example frontend/.env   # 前端：高德 JS Key 与安全密钥（地图渲染用）
 ```
 
-需要填写的键：`DEEPSEEK_API_KEY`、`AMAP_WEB_KEY`、`AMAP_JS_KEY`、`EMBED_API_KEY`（向量化用）。
+后端必填：`DEEPSEEK_API_KEY`、`AMAP_WEB_KEY`、`EMBED_API_KEY`。
+可选：`RERANK_MODEL=qwen3-rerank` 启用专用精排（留空则退回 LLM 打分）。
 
-> `.env` 含真实密钥，已被 `.gitignore` 排除，切勿提交。
+> 两份 `.env` 都含真实密钥，已被 `.gitignore` 排除，切勿提交。
 
 ### 2. 安装依赖
 
@@ -83,9 +88,12 @@ cd frontend && npm install
 
 ### 4. 启动
 
+**方式 A：本地跑（改代码即时生效，适合开发）**
+
 ```bash
-# 后端：自动拉起 Redis + 校验高德 Key + uvicorn 热重载（Windows PowerShell）
-powershell -ExecutionPolicy Bypass -File start.ps1
+# 后端：检查/拉起 Redis + 校验高德 Key + uvicorn 热重载
+powershell -ExecutionPolicy Bypass -File start.ps1   # Windows
+bash start.sh                                        # Linux / macOS
 
 # 前端（另开终端）
 cd frontend && npm run dev
@@ -93,6 +101,16 @@ cd frontend && npm run dev
 
 - 前端：http://localhost:5173
 - 后端 API 文档：http://127.0.0.1:8000/docs
+
+**方式 B：Docker 一键起（适合交付/演示）**
+
+```bash
+docker compose up --build
+```
+
+- 统一入口：http://localhost:8080（nginx 托管前端并把 `/api` 反代到后端）
+- 首次构建需拉取基础镜像，国内网络较慢时可配置镜像加速器
+- 前端的高德 JS Key 是**构建期**从 `frontend/.env` 内联进产物的，改 Key 后需重新 `docker compose build frontend`
 
 ## 常用命令
 
@@ -106,8 +124,11 @@ cd frontend && npm run build
 # 里程碑端到端验证脚本（会调用真实 LLM）
 .venv/Scripts/python.exe -X utf8 backend/scripts/test_m2.py
 
-# RAG 检索效果评估（Top1/TopK 命中率、MRR、Noise Rate、跨城市污染）
+# RAG 检索效果评估（48 条用例；指标口径见 backend/eval/README.md）
 .venv/Scripts/python.exe -X utf8 backend/scripts/evaluate_rag_retrieval.py --limit 3
+
+# 启用专用精排后再跑一次做对比（RERANK_MODEL 留空则退回 LLM 打分）
+RERANK_MODEL=qwen3-rerank .venv/Scripts/python.exe -X utf8 backend/scripts/evaluate_rag_retrieval.py
 
 # 后端单元/接口测试（pytest，离线，无需任何 Key）
 .venv/Scripts/python.exe -X utf8 -m pytest backend -q
