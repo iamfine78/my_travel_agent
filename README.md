@@ -10,6 +10,7 @@
 - **自然语言编辑**：一句话修改某天行程（如「第二天换成轻松一点」）
 - **历史与导出**：SQLite 长期存储，一键导出中文 Markdown / PDF
 - **Token 观测**：按「改写 / 重排 / 生成 / 编辑」四阶段统计消耗
+- **外部依赖降级**：Redis / 高德 / 天气 / 精排任一不可用都**继续出结果**，并在 `sources` 里如实标注哪些信息缺失，不会整个请求失败
 
 ## 技术栈
 
@@ -18,9 +19,9 @@
 | 后端 | FastAPI + Pydantic + SQLAlchemy（SQLite） |
 | 前端 | Vue3 + Vite + vue-router + Axios |
 | LLM | deepseek-flash（OpenAI 兼容，原生多模态） |
-| RAG | Chroma 向量库 + LLM 精排（deepseek-flash） |
+| RAG | Chroma 向量库；嵌入 dashscope `text-embedding-v3`；精排三级降级（`qwen3-rerank` → LLM 打分 → 规则打分） |
 | 缓存 | Redis（不可用时优雅降级） |
-| 外部服务 | 高德地图 Web 服务（POI / 地理编码 / 天气） |
+| 外部服务 | 高德地图 Web 服务（POI / 地理编码 / 行政区划 / 天气） |
 
 ## 目录结构
 
@@ -36,8 +37,9 @@ pythonProject2/
 │   │   ├── core/         # 业务异常体系（PlanningError 及子类）
 │   │   └── config.py     # 全局配置（读 .env）
 │   ├── data/             # 6 城攻略 md、检索规则、Chroma / SQLite（运行时生成）
-│   ├── eval/             # RAG 评估样例集
-│   └── scripts/          # 入库、调试、评估脚本
+│   ├── eval/             # RAG 评估集（48 条）与指标说明
+│   ├── tests/            # pytest 离线测试套件（218 例）
+│   └── scripts/          # 入库、探针、调试、评估脚本（索引见 scripts/README.md）
 ├── frontend/src/         # Home / Result / History 三页面 + 高德地图组件
 ├── docs/                 # 项目文档
 ├── docker-compose.yaml   # 一键编排前端 + 后端 + Redis（含两个 Dockerfile）
@@ -130,15 +132,16 @@ cd frontend && npm run build
 # 启用专用精排后再跑一次做对比（RERANK_MODEL 留空则退回 LLM 打分）
 RERANK_MODEL=qwen3-rerank .venv/Scripts/python.exe -X utf8 backend/scripts/evaluate_rag_retrieval.py
 
-# 后端单元/接口测试（pytest，离线，无需任何 Key）
+# 后端单元/接口测试（218 例，约 3 秒；完全离线，不需要网络与任何 Key）
 .venv/Scripts/python.exe -X utf8 -m pytest backend -q
 
-# 真实 LLM/高德集成测试（默认跳过，会消耗额度）
+# 真实 LLM/高德集成测试（2 例，默认跳过；需要网络并会消耗额度）
 RUN_LIVE_TESTS=1 .venv/Scripts/python.exe -X utf8 -m pytest backend -m live
 ```
 
-> `backend/tests/` 为 pytest 测试套件（离线，用 monkeypatch / 临时 SQLite / 假 Redis 隔离外部依赖）；
-> `backend/scripts/` 下的 `test_m*.py` 是「直接运行」的里程碑验证脚本，不是 pytest 用例。
+> `backend/tests/` 为 pytest 测试套件（离线，用 monkeypatch / 临时 SQLite / 假 Redis 隔离外部依赖，
+> 实测把代理指向死地址仍全绿）；
+> `backend/scripts/` 下的 `test_m*.py` 是「直接运行」的里程碑验证脚本，**不是** pytest 用例。
 
 ## API 概览
 
@@ -160,10 +163,14 @@ RUN_LIVE_TESTS=1 .venv/Scripts/python.exe -X utf8 -m pytest backend -m live
 ## 文档
 
 - [项目规划书](docs/智能旅行规划系统-项目规划书.md)
+- [RAG 评估指标口径](backend/eval/README.md)
+- [scripts 目录索引](backend/scripts/README.md)
 
 ## 开发约定
 
 - 代码注释、提示词、UI 文案均为中文
 - LLM 输出统一用 `response_format=json_object` + Pydantic 双重校验
-- 接口层（`api/routes`）只做校验与异常转换，业务编排在 `services/`
+- 接口层（`api/routes`）只做参数校验与调用，业务编排在 `services/`
+- **业务失败走异常体系**：抛 `app/core/errors.py` 里的 `PlanningError` 子类（`status_code` 写在异常类上），由全局 handler 统一映射成 HTTP 响应 —— 不要在每个路由里重复 try/except 转状态码
+- **外部依赖失败一律降级而非报错**：Redis / 高德 / 天气 / 精排失败时保留已有结果，并在 `sources` 里如实标注缺失了什么（例：`高德地理信息补全失败，坐标/图片可能缺失`）
 - 新增沉淀城市：在 `backend/data/` 放 `{city}_guide.md`，在 `rag/guide_catalog.py` 注册并重跑入库脚本
