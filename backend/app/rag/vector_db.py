@@ -11,6 +11,7 @@
 import logging
 import re
 import uuid
+from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
@@ -98,6 +99,8 @@ def get_collection() -> Chroma:
     """获取（或创建）持久化集合。"""
     global _collection
     if _collection is None:
+        # Chroma(...) 默认 create_collection_if_not_exists=True，
+        # __init__ 内部已 get_or_create 集合，无需额外初始化
         _collection = Chroma(
             collection_name=settings.CHROMA_COLLECTION,
             embedding_function=get_embeddings(),
@@ -133,13 +136,31 @@ def index_guides(force: bool = False) -> int:
         logger.info(f"  {guide.city}: {len(docs)} 块")
 
     # 先清空旧数据再入库（重建模式）
+    # 用"删除本地持久化目录"代替 chromadb 的 delete_collection()：
+    # chromadb 在同一进程删除"非空集合"后立即 get_or_create 存在状态竞态
+    # （返回未初始化实例，add_documents 报 not initialized），删目录最彻底
     if force:
+        import shutil
+
+        chroma_dir = Path(settings.CHROMA_DIR)
+        if chroma_dir.exists():
+            try:
+                shutil.rmtree(chroma_dir, ignore_errors=True)
+                logger.info(f"已删除旧向量库目录: {chroma_dir}")
+            except Exception as e:
+                logger.warning(f"删除向量库目录失败: {e}")
+        _collection = None
+        collection = get_collection()
+
+    # 防御：偶发情况下 chromadb 删除后立即重建可能返回未初始化实例，
+    #       强制重置一次（delete+recreate）确保可写
+    if getattr(collection, "_chroma_collection", None) is None:
+        logger.warning("检测到未初始化的集合实例，强制 reset_collection()")
         try:
-            collection.delete_collection()
+            collection.reset_collection()
+        except Exception:
             _collection = None
             collection = get_collection()
-        except Exception as e:
-            logger.warning(f"清空旧集合失败: {e}")
 
     ids = [uuid.uuid4().hex for _ in all_docs]
     collection.add_documents(all_docs, ids=ids)

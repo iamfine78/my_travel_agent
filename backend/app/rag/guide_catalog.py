@@ -35,6 +35,14 @@ GUIDE_CATALOG: list[GuideInfo] = [
     GuideInfo("上海", "shanghai_guide.md", ["魔都", "沪"]),
     GuideInfo("杭州", "hangzhou_guide.md", ["临安", "钱塘"]),
     GuideInfo("重庆", "chongqing_guide.md", ["山城", "渝"]),
+    GuideInfo("南京", "nanjing_guide.md", ["金陵", "建康"]),
+    GuideInfo("苏州", "suzhou_guide.md", ["姑苏", "吴中"]),
+    GuideInfo("广州", "guangzhou_guide.md", ["羊城", "穗"]),
+    GuideInfo("武汉", "wuhan_guide.md", ["江城", "鄂"]),
+    GuideInfo("长沙", "changsha_guide.md", ["星城", "潭州"]),
+    GuideInfo("厦门", "xiamen_guide.md", ["鹭岛", "鹭城"]),
+    GuideInfo("青岛", "qingdao_guide.md", ["岛城", "琴岛"]),
+    GuideInfo("昆明", "kunming_guide.md", ["春城", "滇"]),
 ]
 
 # 城市名 → 攻略信息 的快速索引（含别名）

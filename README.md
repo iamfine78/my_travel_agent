@@ -36,7 +36,7 @@ pythonProject2/
 │   │   ├── services/     # 行程编排、城市分级、高德、天气、存储、缓存、导出
 │   │   ├── core/         # 业务异常体系（PlanningError 及子类）
 │   │   └── config.py     # 全局配置（读 .env）
-│   ├── data/             # 6 城攻略 md、检索规则、Chroma / SQLite（运行时生成）
+│   ├── data/             # 14 城攻略 md、检索规则、Chroma / SQLite（运行时生成）
 │   ├── eval/             # RAG 评估集（48 条）与指标说明
 │   ├── tests/            # pytest 离线测试套件（218 例）
 │   └── scripts/          # 入库、探针、调试、评估脚本（索引见 scripts/README.md）

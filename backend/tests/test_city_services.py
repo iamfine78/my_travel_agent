@@ -44,8 +44,11 @@ class TestSettledCity:
 
     def test_all_settled_is_six_cities(self):
         settled = registry.all_settled()
-        assert len(settled) == 6
-        assert set(settled) == {"西安", "成都", "北京", "上海", "杭州", "重庆"}
+        assert len(settled) == 14
+        assert set(settled) == {
+            "西安", "成都", "北京", "上海", "杭州", "重庆",
+            "南京", "苏州", "广州", "武汉", "长沙", "厦门", "青岛", "昆明",
+        }
 
     def test_get_guide_returns_none_for_unknown(self):
         assert registry.get_guide("大理") is None
