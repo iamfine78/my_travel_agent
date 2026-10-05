@@ -1,0 +1,723 @@
+/* ============================================================
+   TRIP PLANNER DEMO · 全局设计系统
+   设计方向：旅行路线感（路径线 + 节点圆点）+ 大数字数据展示
+   色彩：深航蓝 / 靛紫 / 天光蓝 / 纸白 / 墨灰 / 琥珀（费用锚点）
+   原则：克制 —— 一个记忆点，其余安静
+   ============================================================ */
+:root {
+  /* 色彩 token */
+  --navy: #0e1b2c;          /* 深航蓝：导航 / hero 主背景 */
+  --indigo: #5b5bd6;        /* 靛紫：主交互 / 强调 */
+  --indigo-deep: #4a4ac2;   /* 靛紫深：hover */
+  --sky: #3b82f6;           /* 天光蓝：路径线 / 链接 */
+  --paper: #f6f8fb;         /* 纸白：页面背景 */
+  --surface: #ffffff;       /* 卡片表面 */
+  --ink: #334155;           /* 墨灰：正文 */
+  --ink-soft: #64748b;      /* 次级文字 */
+  --ink-faint: #94a3b8;     /* 弱化文字 */
+  --amber: #f59e0b;         /* 琥珀：费用 / 预算（钱的锚点） */
+  --green: #16a34a;         /* 免费 */
+  --border: #e5eaf2;        /* 分隔线 */
+  --border-strong: #c9d4e2;
+
+  /* 层级 token */
+  --radius-card: 10px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(14, 27, 44, 0.05), 0 4px 14px rgba(14, 27, 44, 0.06);
+  --shadow-lift: 0 2px 4px rgba(14, 27, 44, 0.08), 0 10px 28px rgba(14, 27, 44, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background-color: var(--paper);
+  /* 极淡的坐标网格肌理（路线图氛围，非装饰性渐变） */
+  background-image:
+    linear-gradient(to right, rgba(14, 27, 44, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 27, 44, 0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+/* ============ 顶部导航：深航蓝实色 ============ */
+.navbar {
+  background: var(--navy);
+  color: #fff;
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.navbar .brand-en {
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  color: #7d8aa0;
+  margin-right: 4px;
+  font-weight: 600;
+}
+.navbar .brand {
+  font-size: 16px;
+  font-weight: 700;
+  margin-right: 20px;
+  letter-spacing: 0.5px;
+}
+.navbar a {
+  color: #b6c1d4;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+.navbar a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+.navbar a.router-link-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ============ 页面容器 ============ */
+.page {
+  max-width: 1160px;
+  margin: 24px auto;
+  padding: 0 16px 40px;
+}
+
+/* ============ 卡片：白底 + 细边框 + 分层圆角 ============ */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  scroll-margin-top: 72px;
+}
+.card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--navy);
+  letter-spacing: 0.2px;
+}
+.card h3 {
+  font-size: 15px;
+  margin: 10px 0 6px;
+  color: var(--ink);
+}
+
+/* 区块标题：左竖线 + 无装饰字 */
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--sky);
+  line-height: 1.2;
+}
+
+/* ============ 表单 ============ */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.12);
+}
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 12px 0 5px;
+  letter-spacing: 0.3px;
+}
+
+/* ============ 按钮 ============ */
+.btn {
+  background: var(--indigo);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 4px 6px 4px 0;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.btn:hover {
+  background: var(--indigo-deep);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.secondary {
+  background: #fff;
+  color: var(--indigo);
+  border: 1px solid var(--border-strong);
+}
+.btn.secondary:hover {
+  background: #f2f3ff;
+  border-color: var(--indigo);
+}
+.btn.danger {
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #f3c1c1;
+}
+.btn.danger:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============ 多选标签 ============ */
+.chip {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  margin: 4px 6px 4px 0;
+  user-select: none;
+  transition: all 0.15s;
+}
+.chip:hover {
+  border-color: var(--indigo);
+  color: var(--indigo);
+}
+.chip.active {
+  background: var(--indigo);
+  color: #fff;
+  border-color: var(--indigo);
+}
+
+/* ============ 时段卡片（路线节点化） ============ */
+.slot {
+  padding-left: 0;
+  margin: 10px 0;
+  position: relative;
+}
+.slot h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 时段节点圆点 + 路径竖线 */
+.slot h4::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sky);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+.activity {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  margin: 8px 0 8px 20px;
+  display: flex;
+  gap: 14px;
+  position: relative;
+  transition: box-shadow 0.15s;
+}
+.activity:hover {
+  box-shadow: var(--shadow-card);
+}
+/* 左侧路径连线 */
+.activity::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(59, 130, 246, 0.25);
+}
+.activity img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.activity .meta {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-top: 5px;
+}
+
+/* ============ 提示 / 错误 ============ */
+.tip {
+  background: #eef3ff;
+  border-left: 3px solid var(--sky);
+  padding: 8px 12px;
+  margin: 6px 0;
+  font-size: 13px;
+  border-radius: 6px;
+  color: var(--ink);
+}
+.error {
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #991b1b;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--indigo);
+  font-size: 15px;
+}
+
+/* ============ 表格 ============ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+th {
+  color: var(--ink-soft);
+  font-weight: 600;
+  background: transparent;
+  border-bottom: 2px solid var(--border);
+}
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============ 历史卡片 ============ */
+.history-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+.history-card:hover {
+  box-shadow: var(--shadow-lift);
+}
+.history-card .dest {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.3px;
+}
+
+/* ============ 三栏布局（结果页） ============ */
+.result-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.result-left {
+  width: 168px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 72px;
+}
+.result-main {
+  flex: 1;
+  min-width: 0;
+}
+.result-right {
+  width: 264px;
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .result-layout {
+    flex-direction: column;
+  }
+  .result-left,
+  .result-right {
+    width: 100%;
+    position: static;
+  }
+}
+
+/* ============ 免费 / 收费徽标 ============ */
+.free-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: #e7f7ed;
+}
+.cost-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  color: #9a5b00;
+  background: #fdf0d7;
+}
+
+/* ============ 点位明细（路线节点列表） ============ */
+.point-item {
+  display: flex;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background: #fff;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  position: relative;
+}
+.point-no {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.point-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.point-addr {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+.point-guide {
+  font-size: 13px;
+  color: var(--indigo);
+  margin-top: 6px;
+  line-height: 1.7;
+}
+.point-guide.old {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ============ 侧边导航 ============ */
+.nav-menu {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+.nav-menu .menu-item {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+.nav-menu .menu-item:hover,
+.nav-menu .menu-item.active {
+  background: #eef0ff;
+  color: var(--indigo);
+}
+.nav-menu .menu-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--ink-faint);
+  margin: 12px 0 6px;
+  padding: 0 12px;
+}
+
+/* ============ 操作区按钮（主操作实心 / 辅助白底描边） ============ */
+.menu-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 9px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  color: var(--indigo);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 5px 0;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.menu-btn:hover {
+  background: #eef0ff;
+  border-color: var(--indigo);
+}
+.menu-btn.primary {
+  background: linear-gradient(90deg, #5b5bd6, #7c6cf0);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(91, 91, 214, 0.3);
+}
+.menu-btn.primary:hover {
+  opacity: 0.9;
+  background: linear-gradient(90deg, #4a4ac2, #6b5be0);
+}
+.menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============ Hero（规划页） ============ */
+.hero {
+  background: var(--navy);
+  border-radius: 14px;
+  padding: 34px 36px 30px;
+  color: #fff;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+/* 路线图网格肌理（深色版） */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+.hero .hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #8fa0bd;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+.hero h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.25;
+}
+.hero .hero-sub {
+  font-size: 14px;
+  color: #a9b7cf;
+  margin-top: 8px;
+  max-width: 640px;
+}
+
+/* 大数字 + 小标签（数据展示） */
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 24px;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+}
+.hero-stat .num {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+.hero-stat .num em {
+  font-style: normal;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8fa0bd;
+  margin-left: 2px;
+}
+.hero-stat .lbl {
+  font-size: 12px;
+  color: #8fa0bd;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* 起点 → 终点 路线条（Hero 装饰） */
+.route-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 22px;
+  font-size: 12px;
+  color: #8fa0bd;
+}
+.route-strip .node {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+  flex-shrink: 0;
+}
+.route-strip .seg {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.25) 0 6px, transparent 6px 12px);
+  margin: 0 8px;
+}
+.route-strip .node.end {
+  background: var(--sky);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+/* ============ 预算条形（结果页右侧） ============ */
+.budget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+  font-size: 13px;
+}
+.budget-row .lbl {
+  width: 62px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.budget-row .bar-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: #edf0f5;
+  overflow: hidden;
+}
+.budget-row .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--amber);
+}
+.budget-row .val {
+  width: 56px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.budget-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.budget-total .amt {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ 天气条目 ============ */
+.weather-item {
+  background: #f2f6ff;
+  border-radius: var(--radius-card);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e2ebff;
+}
+.weather-item .w-date {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ============ 概览大数字 ============ */
+.overview-hero {
+  display: flex;
+  gap: 32px;
+  margin: 12px 0 14px;
+  align-items: flex-end;
+}
+.overview-hero .ov-num {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.overview-hero .ov-num small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  margin-left: 4px;
+}
+.overview-hero .ov-lbl {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-top: 6px;
+}

@@ -1,0 +1,35 @@
+# ============================================
+# Docker Compose 编排：前端 + 后端 + Redis
+# 用途：一键起整套系统（本机已有 Docker 时可用）
+# 注意：本机当前 Redis 用 Windows 原生版跑（C:\Users\19674\redis-win），
+#       若要用容器版 Redis，把 backend 的 REDIS_URL 指到 redis 服务即可
+# ============================================
+services:
+  redis:
+    image: redis:7
+    container_name: travel-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: travel-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+    volumes:
+      - ./backend/data:/app/data   # 持久化 SQLite 与 Chroma 数据
+
+  frontend:
+    build: ./frontend
+    container_name: travel-frontend
+    ports:
+      - "8080:80"                  # nginx 对外端口
+    depends_on:
+      - backend

@@ -1,0 +1,40 @@
+# ============================================
+# 智能旅行规划系统 · Git 忽略规则
+# 原则：忽略「环境、密钥、依赖、可重新生成的产物、临时调试文件」
+# ============================================
+
+# ---------- 密钥（务必不要提交！含真实 API Key） ----------
+.env
+.env.local
+*.local
+
+# ---------- Python 环境与缓存 ----------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ---------- Node 依赖与构建产物 ----------
+node_modules/
+frontend/dist/
+frontend/.preview/
+
+# ---------- IDE ----------
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# ---------- 运行时数据（可由脚本重新生成） ----------
+backend/data/chroma_db/
+backend/data/travel.db
+*.db
+*.sqlite3
+
+# ---------- 临时调试产物（下划线前缀，scripts/ 下） ----------
+backend/scripts/_*
+
+# ---------- 杂项 ----------
+*.log
+.DS_Store
+Thumbs.db
