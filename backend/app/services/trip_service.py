@@ -80,7 +80,7 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
         logger.info(f"A 级 RAG：city={city} 召回 {len(hits)} 条")
     elif level == "B":
         mode = "dynamic"
-        pool = place_candidate_service.get_candidates(city)
+        pool = place_candidate_service.get_candidates(city, resolved.get("adcode", ""))
         context = place_candidate_service.format_candidates(pool)
         total = sum(len(v) for v in pool.values())
         sources = [f"{city}高德候选池（{total} 个真实地点）"]

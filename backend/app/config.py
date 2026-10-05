@@ -58,8 +58,15 @@ class Settings:
     EMBED_BASE_URL: str = os.getenv("EMBED_BASE_URL", "")
     EMBED_MODEL_NAME: str = os.getenv("EMBED_MODEL_NAME", "text-embedding-v3")
 
-    # ---------- 重排序模型（RAG 精排，可选，缺省跳过） ----------
+    # ---------- 重排序模型（RAG 精排；RERANK_MODEL 留空则跳过，退回 LLM/规则打分） ----------
     RERANK_MODEL: str = os.getenv("RERANK_MODEL", "")
+    # 精排不走 OpenAI 兼容协议，是 dashscope 的原生端点（用探针脚本确认过形状）
+    RERANK_API_URL: str = os.getenv(
+        "RERANK_API_URL",
+        "https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank",
+    )
+    # 默认复用嵌入模型的 dashscope 密钥（同一供应商），也可单独指定
+    RERANK_API_KEY: str = os.getenv("RERANK_API_KEY", "") or EMBED_API_KEY
 
     # ---------- RAG 向量库 ----------
     CHROMA_DIR: str = str(Path(BASE_DIR) / "data" / "chroma_db")  # Chroma 本地持久化目录

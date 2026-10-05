@@ -8,6 +8,7 @@ import json
 import logging
 import re
 
+import httpx
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 RERANK_SYSTEM_PROMPT = """你是旅行攻略检索的精排助手。用户会给出一个查询和若干攻略片段，请判断每个片段与查询的相关性并排序。
 输出必须是合法 JSON，不要任何额外文字，格式：
 {"ranked": [{"index": 0, "score": 8, "reason": "一句话理由"}]}
-规则：index 必须是输入片段的下标；score 0-10 整数，越高越相关；按相关度从高到低排列；最多输出 3 条。
+规则：index 必须是输入片段的下标；score 0-10 整数，越高越相关；按相关度从高到低排列，覆盖全部输入片段。
 """
 
 _rerank_llm = None
@@ -66,8 +67,8 @@ def retrieve_and_rerank(
     if not docs:
         return []
 
-    # 2) 重排：LLM 优先，失败降级规则打分
-    ranked = _llm_rerank(query, docs) or _rule_score(query, docs)
+    # 2) 重排：专用模型 → LLM 打分 → 规则打分，逐级降级
+    ranked = rerank(query, docs)
 
     # 3) 组装结果 + 缓存
     result = []
@@ -86,12 +87,100 @@ def retrieve_and_rerank(
     return result
 
 
-# ---------- Rerank 实现 ----------
+# ---------- Rerank 实现（三级降级：专用模型 → LLM 打分 → 规则） ----------
+def rerank(query: str, docs: list) -> list[tuple[int, int, str]]:
+    """对召回片段排序，返回 [(下标, 分数, 理由)]，分数从高到低。
+
+    逐级降级，任一环节失败都不影响出结果，只是排序质量下降：
+      1) 配置了 RERANK_MODEL → dashscope 专用精排（cross-encoder）
+      2) 失败 → 让 LLM 读片段打分（原方案）
+      3) 再失败 → 规则打分（关键词命中 + 城市匹配）
+    """
+    if settings.RERANK_MODEL:
+        ranked = _dashscope_rerank(query, docs)
+        if ranked:
+            logger.info(f"Rerank：dashscope 专用精排（{settings.RERANK_MODEL}）")
+            return ranked
+    ranked = _llm_rerank(query, docs)
+    if ranked:
+        logger.info("Rerank：LLM 打分（专用精排不可用）")
+        return ranked
+    logger.info("Rerank：规则打分（专用精排与 LLM 均不可用）")
+    return _rule_score(query, docs)
+
+
+def _dashscope_rerank(query: str, docs: list) -> list[tuple[int, int, str]] | None:
+    """dashscope 专用精排（qwen3-rerank 等）；失败返回 None 交给下一级降级。
+
+    请求 / 响应形状由 scripts/probe_rerank_api.py 实测确认：
+      请求 {"model", "input": {"query", "documents"}, "parameters": {"top_n", ...}}
+      响应 {"output": {"results": [{"index", "relevance_score"}, ...]}}
+    """
+    if not settings.RERANK_API_KEY:
+        return None
+    try:
+        resp = httpx.post(
+            settings.RERANK_API_URL,
+            headers={
+                "Authorization": f"Bearer {settings.RERANK_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": settings.RERANK_MODEL,
+                "input": {
+                    "query": query,
+                    # 截断控制 token；比原来 200 字宽，避免丢掉片段后半的关键信息
+                    "documents": [d.page_content[:400] for d in docs],
+                },
+                "parameters": {"return_documents": False, "top_n": len(docs)},
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        logger.warning(f"dashscope 精排失败，走降级: {e}")
+        return None
+
+    results = (data.get("output") or {}).get("results") or []
+    ranked: list[tuple[int, int, str]] = []
+    for item in results:
+        idx = int(item.get("index", -1))
+        if not (0 <= idx < len(docs)):
+            continue  # 越界下标直接丢弃，避免 IndexError
+        score01 = float(item.get("relevance_score", 0) or 0)
+        # 统一到 0-10 整数，与 LLM/规则打分同量纲，便于日志与阈值比较
+        ranked.append((idx, round(score01 * 10), f"精排 {score01:.2f}"))
+    if not ranked:
+        return None
+    # 分数可能并列：按下标二次排序，保证结果可复现
+    ranked.sort(key=lambda x: (-x[1], x[0]))
+    _record_rerank_tokens(data)
+    return ranked
+
+
+def _record_rerank_tokens(data: dict) -> None:
+    """把精排消耗计入 Token 观测。
+
+    dashscope 精排只返回 total_tokens（不区分 prompt/completion），
+    统一记到 prompt 一侧——精排确实是「只读输入」的调用。
+    """
+    total = int((data.get("usage") or {}).get("total_tokens", 0) or 0)
+    if not total:
+        return
+    from app.services.token_tracker import token_tracker
+
+    token_tracker.record(
+        "rerank",
+        {"token_usage": {"prompt_tokens": total, "completion_tokens": 0, "total_tokens": total}},
+    )
+
+
 def _llm_rerank(query: str, docs: list) -> list[tuple[int, int, str]] | None:
-    """deepseek-flash 重排：给每个片段打分排序。失败返回 None。"""
-    # 片段太长会超 token，每个截断到 200 字
+    """LLM 打分重排（降级方案）：让 deepseek 给每个片段打分。失败返回 None。"""
+    # 片段太长会超 token，每个截断到 400 字
     candidates = "\n\n".join(
-        f"[{i}] {d.page_content[:200]}" for i, d in enumerate(docs)
+        f"[{i}] {d.page_content[:400]}" for i, d in enumerate(docs)
     )
     user_text = f"查询：{query}\n\n候选片段：\n{candidates}"
     try:

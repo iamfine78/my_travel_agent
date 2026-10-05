@@ -95,6 +95,7 @@ def search_poi(keywords: str, city: str, poi_type: str = "", limit: int = 10) ->
                 "pname": p.get("pname", ""),   # 省
                 "cityname": p.get("cityname", ""),
                 "adname": p.get("adname", ""),  # 区县
+                "adcode": p.get("adcode", ""),  # 行政区划编码（跨城过滤用）
             }
         )
     cache_service.cache_set(cache_key, result, ttl=MAP_TTL)

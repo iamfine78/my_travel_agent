@@ -26,22 +26,54 @@ MIN_COVERAGE = {"scenic": 4, "food": 4, "lodging": 2}
 # 餐饮候选反向过滤：高德"餐饮服务"类目偶尔混入酒店民宿
 _FOOD_EXCLUDE = ("酒店", "民宿", "客栈", "宾馆", "旅店", "招待所")
 
+# 直辖市：行政区划编码前 2 位即省级码（北京 11 / 天津 12 / 上海 31 / 重庆 50）
+_MUNICIPALITY_PREFIXES = {"11", "12", "31", "50"}
 
-def get_candidates(city: str) -> dict:
+
+def _adcode_ok(target_adcode: str, poi_adcode: str) -> bool:
+    """两个 adcode 是否属于同一城市。
+
+    普通地级市比前 4 位（西安 610100 vs 碑林区 610103 → 都是 6101）；
+    直辖市比前 2 位（北京 110000 vs 东城区 110101 → 都是 11）。
+    任一侧编码缺失或格式异常 → True：判不了就不筛，交给字符串兜底。
+    """
+    t, p = str(target_adcode or ""), str(poi_adcode or "")
+    if len(t) < 6 or len(p) < 6 or not (t.isdigit() and p.isdigit()):
+        return True
+    prefix = 2 if t[:2] in _MUNICIPALITY_PREFIXES else 4
+    return t[:prefix] == p[:prefix]
+
+
+def _belongs_to_city(city: str, target_adcode: str, poi: dict) -> bool:
+    """POI 是否属于目标城市：优先按 adcode 判定，缺编码时退回城市名包含判定。
+
+    字符串包含是旧方案，会把「大理白族自治州」下其他县的 POI 当成「大理市」的
+    —— 有编码时改按编码比较（防止跨城污染）。
+    """
+    poi_adcode = poi.get("adcode") or ""
+    if target_adcode and poi_adcode:
+        return _adcode_ok(target_adcode, poi_adcode)
+    cityname = poi.get("cityname") or poi.get("adname") or ""
+    return not cityname or city in cityname
+
+
+def get_candidates(city: str, adcode: str = "") -> dict:
     """拉取某城市三类候选池。返回 {"scenic": [...], "food": [...], "lodging": [...]}。
 
+    adcode：目标城市的行政区划编码（来自 city_resolver 的解析结果）；
+            给了就能按编码精确过滤跨城 POI，没给则退回城市名包含判定。
     候选条目：{poi_id, name, address, location, image_url, type}
     """
     pool = {}
     for key, poi_type in PLACE_TYPES.items():
-        items = _search_and_filter(city, poi_type, is_food=(key == "food"))
+        items = _search_and_filter(city, poi_type, is_food=(key == "food"), adcode=adcode)
         pool[key] = items
         if len(items) < MIN_COVERAGE[key]:
             logger.warning(f"候选池不足: {city}/{key} 仅 {len(items)} 个（最低 {MIN_COVERAGE[key]}）")
     return pool
 
 
-def _search_and_filter(city: str, poi_type: str, is_food: bool = False) -> list[dict]:
+def _search_and_filter(city: str, poi_type: str, is_food: bool = False, adcode: str = "") -> list[dict]:
     """搜索 + 过滤：跨城市 / 无坐标 / 重复名称 / 餐饮池剔除酒店。"""
     pois = map_service.search_poi(keywords=city, city=city, poi_type=poi_type, limit=20)
 
@@ -50,9 +82,8 @@ def _search_and_filter(city: str, poi_type: str, is_food: bool = False) -> list[
     for p in pois:
         if not p.get("location"):
             continue
-        # 跨城市过滤：POI 所在城市必须匹配目标城市（防"大理"搜出"大理州其他县"）
-        cityname = p.get("cityname") or p.get("adname") or ""
-        if cityname and city not in cityname:
+        # 跨城市过滤（防"大理"搜出大理州其他县、"西安"搜出咸阳）
+        if not _belongs_to_city(city, adcode, p):
             continue
         name = p.get("name", "")
         if not name or name in seen:

@@ -2,6 +2,8 @@
 # 防幻觉机制测试（核心业务规则，离线）
 # 覆盖：B 级候选池过滤、池外 POI 校验替换/移除、白名单命中判定
 # ============================================
+import pytest
+
 from app.services import map_service
 from app.services import place_candidate_service as pcs
 from app.services.trip_service import _validate_pool
@@ -101,6 +103,48 @@ class TestPlaceCandidateFilter:
         pool = pcs.get_candidates("大理")
         assert set(pool) == {"scenic", "food", "lodging"}
         assert all(pool[k] == [] for k in pool)
+
+
+class TestAdcodeFiltering:
+    """跨城过滤优先按 adcode 判定（比城市名字符串可靠）。"""
+
+    def test_same_city_prefix_matches(self):
+        assert pcs._adcode_ok("610100", "610103") is True   # 西安市 vs 碑林区
+
+    def test_different_city_prefix_rejected(self):
+        assert pcs._adcode_ok("610100", "610400") is False  # 西安 vs 咸阳
+
+    def test_municipality_compares_two_digit_prefix(self):
+        assert pcs._adcode_ok("110000", "110101") is True   # 北京市 vs 东城区
+        assert pcs._adcode_ok("110000", "120101") is False  # 北京 vs 天津
+
+    @pytest.mark.parametrize("target,poi", [
+        ("", "610103"),          # 没有目标码
+        ("610100", ""),          # POI 没有码
+        ("6101", "610103"),      # 码不完整
+        ("abcdef", "610103"),    # 非数字
+    ])
+    def test_unknown_codes_are_not_filtered(self, target, poi):
+        assert pcs._adcode_ok(target, poi) is True
+
+    def test_filter_prefers_adcode_over_city_name(self, monkeypatch):
+        """城市名里含「西安」但 adcode 属咸阳 —— 字符串判定会放过，编码判定应拦住。"""
+        raw = [
+            {"name": "西安某景点", "location": "108,34", "cityname": "西安", "adcode": "610103", "poi_id": "P1", "address": ""},
+            {"name": "咸阳某景点", "location": "109,34", "cityname": "西安", "adcode": "610400", "poi_id": "P2", "address": ""},
+        ]
+        monkeypatch.setattr(map_service, "search_poi", lambda **kw: raw)
+        out = pcs._search_and_filter("西安", "风景名胜", adcode="610100")
+        assert [i["name"] for i in out] == ["西安某景点"]
+
+    def test_filter_falls_back_to_city_name_without_adcode(self, monkeypatch):
+        raw = [
+            {"name": "A", "location": "1,1", "cityname": "西安", "poi_id": "P1", "address": ""},
+            {"name": "B", "location": "2,2", "cityname": "咸阳", "poi_id": "P2", "address": ""},
+        ]
+        monkeypatch.setattr(map_service, "search_poi", lambda **kw: raw)
+        out = pcs._search_and_filter("西安", "风景名胜", adcode="")
+        assert [i["name"] for i in out] == ["A"]
 
 
 class TestIsValidPoi:
