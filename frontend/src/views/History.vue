@@ -18,7 +18,7 @@
         <div class="empty-icon">◌</div>
         <div class="empty-title">还没有保存过行程</div>
         <div class="empty-desc">去规划页生成一份旅行计划，保存后就会出现在这里。</div>
-        <router-link to="/" class="btn" style="margin-top: 16px">去规划</router-link>
+        <router-link to="/" class="btn empty-cta">去规划</router-link>
       </div>
 
       <!-- 卡片式列表（路线感：圆点 + 目的地大标题） -->
@@ -115,8 +115,11 @@ function formatTime(iso) {
 </script>
 
 <style scoped>
-/* 空状态（邀请去规划） */
+/* 空状态（邀请去规划）：flex 垂直排列，避免说明文字与按钮重叠 */
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   padding: 48px 0 40px;
 }
@@ -134,7 +137,11 @@ function formatTime(iso) {
 .empty-desc {
   font-size: 13px;
   color: var(--ink-faint);
-  margin-top: 6px;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.empty-cta {
+  margin-top: 20px;
 }
 
 /* 历史卡片左侧路线感：起点 → 终点 */

@@ -96,7 +96,7 @@ body {
 
 /* ============ 页面容器 ============ */
 .page {
-  max-width: 1160px;
+  max-width: 1320px;
   margin: 24px auto;
   padding: 0 16px 40px;
 }
@@ -371,11 +371,11 @@ tr:last-child td {
 /* ============ 三栏布局（结果页） ============ */
 .result-layout {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: flex-start;
 }
 .result-left {
-  width: 168px;
+  width: 150px;
   flex-shrink: 0;
   position: sticky;
   top: 72px;
@@ -385,7 +385,7 @@ tr:last-child td {
   min-width: 0;
 }
 .result-right {
-  width: 264px;
+  width: 280px;
   flex-shrink: 0;
 }
 @media (max-width: 900px) {
@@ -637,29 +637,52 @@ tr:last-child td {
 .budget-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 7px 0;
+  gap: 8px;
+  margin: 8px 0;
   font-size: 13px;
 }
 .budget-row .lbl {
-  width: 62px;
+  width: 56px;
   color: var(--ink-soft);
   flex-shrink: 0;
 }
 .budget-row .bar-track {
   flex: 1;
-  height: 8px;
-  border-radius: 4px;
-  background: #edf0f5;
+  min-width: 48px;   /* 轨道保底宽度：窗口宽（三栏）时进度条也可见 */
+  height: 12px;
+  border-radius: 6px;
+  background: #e6e8f0;   /* 轨道加深：浅白灰 → 明显可见的浅灰紫 */
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(30, 41, 59, 0.08);
 }
 .budget-row .bar-fill {
+  display: block;   /* 关键：span 默认 inline，width/height 不参与布局；block 才能撑起进度条 */
   height: 100%;
-  border-radius: 4px;
-  background: var(--amber);
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+/* 每个预算项目一条专属颜色（蓝紫家族 + 琥珀，渐变填充） */
+.budget-row .bar-fill-tickets   { background: linear-gradient(90deg, #f59e0b, #fbbf24); }  /* 门票：琥珀 */
+.budget-row .bar-fill-lodging   { background: linear-gradient(90deg, #7c6ef2, #9f93f7); }  /* 住宿：蓝紫 */
+.budget-row .bar-fill-food      { background: linear-gradient(90deg, #f97316, #fb923c); }  /* 餐饮：暖橙 */
+.budget-row .bar-fill-transport { background: linear-gradient(90deg, #3b82f6, #60a5fa); }  /* 交通：蓝 */
+.budget-row .bar-fill-other     { background: linear-gradient(90deg, #10b981, #34d399); }  /* 其他：青绿 */
+/* 百分比数字跟随各自颜色（.pct.pct-X 双类提高优先级，避免被 .pct 基础色覆盖） */
+.budget-row .pct.pct-tickets   { color: #f59e0b; }
+.budget-row .pct.pct-lodging   { color: #7c6ef2; }
+.budget-row .pct.pct-food      { color: #f97316; }
+.budget-row .pct.pct-transport { color: #3b82f6; }
+.budget-row .pct.pct-other     { color: #10b981; }
+.budget-row .pct {
+  width: 30px;
+  text-align: right;
+  font-weight: 700;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 .budget-row .val {
-  width: 56px;
+  width: 60px;
   text-align: right;
   font-weight: 700;
   color: var(--navy);

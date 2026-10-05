@@ -163,7 +163,8 @@
             <h2>预算明细</h2>
             <div v-for="(label, key) in budgetLabels" :key="key" class="budget-row">
               <span class="lbl">{{ label }}</span>
-              <span class="bar-track"><span class="bar-fill" :style="{ width: barWidth(key) }"></span></span>
+              <span class="bar-track"><span class="bar-fill" :class="'bar-fill-' + key" :style="{ width: barWidth(key) }"></span></span>
+              <span class="pct" :class="'pct-' + key">{{ barPercent(key) }}%</span>
               <span class="val">{{ splitValue(key) }} 元</span>
             </div>
             <div class="budget-total">
@@ -242,6 +243,13 @@ function barWidth(key) {
   const v = Number(store.result?.budget_split?.[key]) || 0
   const total = Number(budgetTotal.value) || 1
   return Math.max(2, Math.round((v / total) * 100)) + '%'
+}
+
+// 预算占比百分比（进度条旁的数字）
+function barPercent(key) {
+  const v = Number(store.result?.budget_split?.[key]) || 0
+  const total = Number(budgetTotal.value) || 1
+  return Math.round((v / total) * 100)
 }
 
 // 按天花费：每天所有活动花费之和
