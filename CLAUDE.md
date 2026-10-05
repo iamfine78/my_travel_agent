@@ -69,4 +69,5 @@ npm run build          # 生产构建
 - **新增沉淀城市**：在 `data/` 放 `{city}_guide.md`，并在 `rag/guide_catalog.py` 的 `GUIDE_CATALOG` 注册（含别名），然后重跑 `build_vector_db.py --force`。
 - **接口层薄、服务层厚**：`api/routes/*.py` 只做参数校验与异常转换（`ValueError` → 400），业务编排放在 `services/`。
 - **注意路由顺序**：FastAPI 中静态路径必须定义在 `/{trip_id}` 之前（见 `export.py` 里 `from-data` 的注释），否则会被当作 path 参数吞掉。
-- `智能旅行规划系统-项目规划书.md` 是早期规划文档，其中"命令行 travel_agent/ 目录"等结构**已废弃**，仅里程碑与设计意图仍有参考价值。
+- `docs/智能旅行规划系统-项目规划书.md` 是早期规划文档，其中"命令行 travel_agent/ 目录"等结构**已废弃**，仅里程碑与设计意图仍有参考价值。
+- 仓库已 git 初始化（`main` 分支）。`backend/.env` 含真实密钥且被 `.gitignore` 排除，**不要提交**；`data/chroma_db`、`data/travel.db`、`frontend/dist`、`scripts/_*` 均为可重新生成的产物，已忽略。
