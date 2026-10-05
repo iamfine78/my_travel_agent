@@ -38,7 +38,11 @@ class TripRecord(Base):
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        # 必须与 created_at 一样带时区：原来直接用 datetime.now（无 tz），
+        # 会让同一行里两个时间字段一个 UTC 一个本地时间，比较时差 8 小时
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     def __repr__(self) -> str:  # 调试时打印友好

@@ -74,6 +74,12 @@ def list_trips(limit: int = 20, offset: int = 0) -> list[TripRecord]:
         )
 
 
+def count_trips() -> int:
+    """历史行程总数（与分页无关的真实计数，供列表接口的 total 字段用）。"""
+    with get_session() as db:
+        return db.query(TripRecord).count()
+
+
 def delete_trip(trip_id: str) -> bool:
     """删除一条行程；返回是否真的删掉了。"""
     with get_session() as db:

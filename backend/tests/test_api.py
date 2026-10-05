@@ -59,6 +59,61 @@ class TestTripCrud:
         assert client.post("/api/trip/不存在/refresh").status_code == 404
 
 
+class TestHistoryTotal:
+    def test_total_is_real_count_not_page_size(self, client):
+        for _ in range(25):
+            assert _save(client).status_code == 201
+
+        page1 = client.get("/api/trip/history", params={"limit": 20, "offset": 0}).json()
+        assert page1["total"] == 25, "total 应是总数，而不是当页条数"
+        assert len(page1["records"]) == 20
+
+        page2 = client.get("/api/trip/history", params={"limit": 20, "offset": 20}).json()
+        assert page2["total"] == 25
+        assert len(page2["records"]) == 5
+
+
+class TestEditPersists:
+    def test_edit_writes_back_to_storage(self, client, monkeypatch):
+        """回归：编辑后的行程曾不回写存储 —— 页面变了，历史里还是旧的。"""
+        from app.services import map_service, trip_service
+
+        trip_id = _save(client).json()["trip_id"]
+        edited = {
+            "destination": "西安",
+            "days": [{"day": 1, "morning": [], "afternoon": [], "evening": []}],
+            "budget_split": {"transport": 100},
+            "summary": "改过的摘要",
+        }
+        # 编辑链路会调 LLM 与高德，离线测试里都替换掉
+        monkeypatch.setattr(trip_service.planner_agent, "edit_trip", lambda current, req: edited)
+        monkeypatch.setattr(map_service, "enrich_itinerary", lambda itin, city: itin)
+
+        r = client.post(f"/api/trip/{trip_id}/edit", json={"instruction": "换成轻松点的"})
+        assert r.status_code == 200
+        assert r.json()["itinerary"]["summary"] == "改过的摘要"
+
+        detail = client.get(f"/api/trip/{trip_id}").json()
+        assert detail["itinerary"]["summary"] == "改过的摘要"
+
+    def test_edit_continues_when_map_enrich_fails(self, client, monkeypatch):
+        """高德补全失败不应让编辑整体失败。"""
+        from app.services import map_service, trip_service
+
+        trip_id = _save(client).json()["trip_id"]
+        edited = {"destination": "西安", "days": [], "budget_split": {}, "summary": "照样改"}
+        monkeypatch.setattr(trip_service.planner_agent, "edit_trip", lambda current, req: edited)
+
+        def boom(itin, city):
+            raise RuntimeError("高德不可用")
+
+        monkeypatch.setattr(map_service, "enrich_itinerary", boom)
+
+        r = client.post(f"/api/trip/{trip_id}/edit", json={"instruction": "随便改"})
+        assert r.status_code == 200
+        assert r.json()["itinerary"]["summary"] == "照样改"
+
+
 class TestExportEndpoints:
     def test_from_data_markdown(self, client, sample_itinerary):
         r = client.post(

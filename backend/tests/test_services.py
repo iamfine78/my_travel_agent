@@ -125,6 +125,20 @@ class TestStorageCRUD:
         assert tmp_storage.get_trip(rec.trip_id) is None
         assert tmp_storage.delete_trip(rec.trip_id) is False
 
+    def test_count_trips_is_independent_of_pagination(self, tmp_storage):
+        for city in ("A城", "B城", "C城"):
+            tmp_storage.create_trip(city)
+        assert tmp_storage.count_trips() == 3
+        assert tmp_storage.count_trips() != len(tmp_storage.list_trips(limit=2))
+
+    def test_updated_at_not_skewed_by_timezone(self, tmp_storage):
+        """回归：updated_at 曾用 datetime.now()（本地时间）而 created_at 用 UTC，
+        SQLite 里比较会整整差 8 小时（东八区）。"""
+        rec = tmp_storage.create_trip("西安", "s", {"v": 1})
+        updated = tmp_storage.update_trip(rec.trip_id, {"v": 2})
+        delta = (updated.updated_at - updated.created_at).total_seconds()
+        assert -5 <= delta <= 60, f"created/updated 时间差异常 {delta}s（疑似时区不一致）"
+
     def test_chinese_is_preserved(self, tmp_storage):
         rec = tmp_storage.create_trip("重庆", "山城之旅", {"note": "轻轨穿楼"})
         out = tmp_storage.to_record_out(tmp_storage.get_trip(rec.trip_id))

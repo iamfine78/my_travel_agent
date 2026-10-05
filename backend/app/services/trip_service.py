@@ -157,7 +157,7 @@ def _validate_pool(itinerary: dict, pool: dict) -> tuple[dict, dict]:
 
 
 def edit_trip(trip_id: str, req: TripEditRequest) -> PlanResponse:
-    """根据用户一句话修改行程。从已保存行程读取再编辑。"""
+    """根据用户一句话修改行程：读已保存行程 → 编辑 → 补全 → 回写。"""
     from app.services import storage_service
 
     record = storage_service.get_trip(trip_id)
@@ -165,11 +165,22 @@ def edit_trip(trip_id: str, req: TripEditRequest) -> PlanResponse:
         raise ValueError("行程不存在")
 
     current = storage_service.to_record_out(record)["itinerary"]
+    destination = current.get("destination", record.destination)
     new_itinerary = planner_agent.edit_trip(current, req)
+
+    # 编辑可能引入新地点：补全坐标/地址/图片，否则前端地图会丢标记。
+    # 高德偶发失败不应让编辑整个失败，故降级为「保留原样」。
+    try:
+        new_itinerary = map_service.enrich_itinerary(new_itinerary, destination)
+    except Exception as e:
+        logger.warning(f"编辑后补全地图信息失败，跳过: {e}")
+
+    # 回写存储：不回写的话用户看到改了、历史里还是旧的
+    storage_service.update_trip(trip_id, new_itinerary)
 
     return PlanResponse(
         trip_id=trip_id,
-        destination=current.get("destination", record.destination),
+        destination=destination,
         itinerary=new_itinerary,
         budget_split=new_itinerary.get("budget_split", {}),
         sources=[],

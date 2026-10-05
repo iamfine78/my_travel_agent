@@ -78,7 +78,9 @@ def save_trip(payload: dict):
 def trip_history(limit: int = 20, offset: int = 0):
     records = storage_service.list_trips(limit=limit, offset=offset)
     return {
-        "total": len(records),
+        # total 用真实总数：以前用 len(records)，分页时它恒等于当页条数，
+        # 前端算不出总页数
+        "total": storage_service.count_trips(),
         "records": [storage_service.to_record_out(r) for r in records],
     }
 
