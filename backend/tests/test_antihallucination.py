@@ -2,8 +2,6 @@
 # 防幻觉机制测试（核心业务规则，离线）
 # 覆盖：B 级候选池过滤、池外 POI 校验替换/移除、白名单命中判定
 # ============================================
-import pytest
-
 from app.services import map_service
 from app.services import place_candidate_service as pcs
 from app.services.trip_service import _validate_pool
@@ -111,11 +109,6 @@ class TestIsValidPoi:
     def test_id_hit(self):
         assert pcs.is_valid_poi(self.POOL, "S1") is True
 
-    @pytest.mark.xfail(
-        reason="既有缺陷：is_valid_poi 在 poi_id 为空时提前 return False，"
-        "导致注释声明的「同名也算命中」分支不可达（scripts/test_b_level.py:46 依赖该分支）",
-        strict=False,
-    )
     def test_name_hit_without_id(self):
         assert pcs.is_valid_poi(self.POOL, "", "真景点") is True
 

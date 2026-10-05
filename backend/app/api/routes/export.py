@@ -37,7 +37,7 @@ def export_trip(trip_id: str, format: str = Query("md", pattern="^(md|pdf)$")):
 def _build_response(itinerary: dict, destination: str, format: str, weather: dict | None = None):
     """按格式生成响应（md 返回文本，pdf 返回文件流）。"""
     if format == "md":
-        md = export_service.itinerary_to_markdown(itinerary, destination)
+        md = export_service.itinerary_to_markdown(itinerary, destination, weather)
         return PlainTextResponse(md, media_type="text/markdown; charset=utf-8")
     else:
         try:

@@ -32,17 +32,73 @@ class TestChineseFont:
 
 
 class TestMarkdownExport:
-    @pytest.mark.xfail(
-        reason="既有缺陷：export_service.itinerary_to_markdown 未实现，"
-        "Markdown 导出接口 500（app/api/routes/export.py:40）",
-        strict=False,
-    )
-    def test_markdown_contains_destination_and_places(self, sample_itinerary):
+    def test_title_and_summary(self, sample_itinerary):
         md = ex.itinerary_to_markdown(sample_itinerary, "西安")
         assert isinstance(md, str)
-        assert "西安" in md
-        assert "秦始皇兵马俑博物馆" in md
-        assert "预算" in md
+        assert md.startswith("# 西安 旅行规划手册")
+        assert "> 西安两日人文美食之旅" in md
+        assert "**行程 2 天**" in md
+
+    def test_days_slots_and_activities(self, sample_itinerary):
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "## 第 1 天" in md
+        assert "## 第 2 天" in md
+        assert "### 上午" in md and "### 下午" in md and "### 晚上" in md
+        assert "- **秦始皇兵马俑博物馆** — 约120元" in md
+        assert "  - 怎么玩：建议游玩 3 小时，先看一号坑" in md
+
+    def test_cost_formats(self, sample_itinerary):
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "约120元" in md          # 数字费用
+        assert "人均60元" in md          # 文本费用
+        assert "**陕西历史博物馆**\n" in md  # 免费（cost=0）不加费用后缀
+
+    def test_meals_lodging_note(self, sample_itinerary):
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "**餐饮**：肉夹馍、biangbiang面" in md
+        assert "**住宿**：建议住钟楼附近，交通便利" in md
+        assert "> 提示：兵马俑需提前预约" in md
+
+    def test_budget_table_and_total(self, sample_itinerary):
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "## 预算拆分" in md
+        assert "| 交通 | 500 |" in md
+        assert "| **合计** | **2000** |" in md
+
+    def test_tips_section(self, sample_itinerary):
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "## 旅行建议" in md
+        assert "1. 春秋早晚温差大，注意添衣" in md
+
+    def test_weather_table_when_provided(self, sample_itinerary):
+        weather = {"forecasts": [{"date": "2026-10-08", "dayweather": "小雨",
+                                  "nightweather": "阴", "daytemp": "18", "nighttemp": "12"}]}
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安", weather)
+        assert "## 天气预报" in md
+        assert "| 10-08 | 小雨转阴 | 18~12℃ |" in md
+
+    def test_no_weather_section_without_data(self, sample_itinerary):
+        assert "天气预报" not in ex.itinerary_to_markdown(sample_itinerary, "西安")
+
+    def test_date_hint_shown_only_when_informative(self, sample_itinerary):
+        # date_hint "第1天" 与标题重复 → 不单列
+        md = ex.itinerary_to_markdown(sample_itinerary, "西安")
+        assert "**第1天**" not in md
+        # 给出额外信息时应单列
+        sample_itinerary["days"][0]["date_hint"] = "10月8日 周三"
+        assert "**10月8日 周三**" in ex.itinerary_to_markdown(sample_itinerary, "西安")
+
+    def test_empty_itinerary_does_not_crash(self):
+        md = ex.itinerary_to_markdown({"days": []}, "未知城市")
+        assert "# 未知城市 旅行规划手册" in md
+        assert "**行程 0 天**" in md
+        assert "预算拆分" not in md
+
+    def test_missing_optional_fields_are_skipped(self):
+        itin = {"days": [{"day": 1, "morning": [{"place": "某地"}]}]}
+        md = ex.itinerary_to_markdown(itin, "某城")
+        assert "- **某地**" in md
+        assert "餐饮" not in md and "住宿" not in md
 
 
 class TestPdfExport:

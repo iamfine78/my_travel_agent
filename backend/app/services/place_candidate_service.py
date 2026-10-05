@@ -88,14 +88,16 @@ def format_candidates(pool: dict) -> str:
 
 
 def is_valid_poi(pool: dict, poi_id: str, name: str = "") -> bool:
-    """校验一个 POI 是否在候选池内（白名单命中）。"""
-    if not poi_id:
-        return False
+    """校验一个 POI 是否在候选池内（白名单命中）。
+
+    命中条件二选一：POI ID 与池内条目相同，或名称与池内条目相同
+    （LLM 有时不带 ID，但名字对得上也算命中）。
+    注意：判空不能提前 return——否则「只有名字、没有 ID」的调用永远命中不了。
+    """
     for key in pool:
         for it in pool[key]:
-            if it["poi_id"] == poi_id:
+            if poi_id and it["poi_id"] == poi_id:
                 return True
-            # 池内同名（LLM 可能没带 ID 但名字对得上）也算命中
             if name and it["name"] == name:
                 return True
     return False

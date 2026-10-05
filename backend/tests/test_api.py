@@ -60,10 +60,6 @@ class TestTripCrud:
 
 
 class TestExportEndpoints:
-    @pytest.mark.xfail(
-        reason="既有缺陷：export_service.itinerary_to_markdown 未实现，Markdown 导出 500",
-        strict=False,
-    )
     def test_from_data_markdown(self, client, sample_itinerary):
         r = client.post(
             "/api/export/from-data?format=md",

@@ -75,6 +75,20 @@ def _parse_cost(c) -> str:
     return s if s else ""
 
 
+def _short_date(d: str) -> str:
+    """'2026-10-08' → '10-08'（高德日期带年份，展示时截短）。"""
+    s = str(d or "")
+    return s[5:] if s.startswith("20") and len(s) > 6 else s
+
+
+def _to_float(v) -> float:
+    """宽松转 float：LLM 可能把预算写成字符串，转不动按 0 计。"""
+    try:
+        return float(v or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _section_bar(pdf, label: str, value: float, total: float, y: float) -> None:
     """预算条形图：label + 金额 + 色块条。"""
     pdf.set_font("cn", "", 11)
@@ -152,11 +166,6 @@ def _cover(pdf: FPDF, itinerary: dict, destination: str, weather: dict | None) -
     forecasts = (weather or {}).get("forecasts", [])[:3]
     if forecasts:
         pdf.set_y(max(pdf.get_y() + 8, 168))
-
-        def _short_date(d: str) -> str:
-            s = str(d or "")
-            return s[5:] if s.startswith("20") and len(s) > 6 else s
-
         pdf.set_font("cn", "", 9)
         row = "   ".join(
             f"{_short_date(c.get('date', ''))} {c.get('dayweather', '')} {c.get('daytemp', '')}~{c.get('nighttemp', '')}℃"
@@ -347,3 +356,137 @@ def itinerary_to_pdf_bytes(itinerary: dict, destination: str, weather: dict | No
     _tips_page(pdf, itinerary)
 
     return bytes(pdf.output())
+
+
+# ---------- Markdown 行程单 ----------
+# 结构与 PDF 手册对齐（封面摘要 → 分天 → 预算 → 建议），沿用同一套中文标签与措辞，
+# 让用户拿到的 .md 和 .pdf 读起来是同一个东西。相对 PDF 额外给出营业时间。
+BUDGET_LABELS = {
+    "transport": "交通",
+    "lodging": "住宿",
+    "food": "餐饮",
+    "tickets": "门票",
+    "other": "其他",
+}
+
+SLOT_LABELS = {"morning": "上午", "afternoon": "下午", "evening": "晚上"}
+
+
+def itinerary_to_markdown(itinerary: dict, destination: str, weather: dict | None = None) -> str:
+    """行程 → Markdown 行程单（可保存、可二次编辑）。"""
+    days = itinerary.get("days") or []
+    split = itinerary.get("budget_split") or {}
+    total = sum(_to_float(split.get(k)) for k in BUDGET_LABELS)
+
+    out: list[str] = [f"# {destination} 旅行规划手册", ""]
+
+    summary = str(itinerary.get("summary", "") or "").strip()
+    if summary:
+        out += [f"> {summary}", ""]
+
+    meta = f"**行程 {len(days)} 天**"
+    if total:
+        meta += f" ｜ **预算约 {total:.0f} 元**"
+    out += [meta, ""]
+
+    weather_md = _md_weather(weather)
+    if weather_md:
+        out.append(weather_md)
+
+    for day in days:
+        out += ["---", ""]
+        out += _md_day(day)
+
+    if split:
+        out += ["---", ""]
+        out += _md_budget(split, total)
+
+    tips = itinerary.get("tips") or []
+    if tips:
+        out += ["---", "", "## 旅行建议", ""]
+        out += [f"{i}. {t}" for i, t in enumerate(tips, 1)]
+        out.append("")
+
+    out += ["---", "", "*由智能旅行规划系统生成 · 价格与开放信息请出行前核实*", ""]
+    return "\n".join(out)
+
+
+def _md_weather(weather: dict | None) -> str:
+    """天气预览（最多 3 天），无数据返回空串。"""
+    forecasts = (weather or {}).get("forecasts") or []
+    if not forecasts:
+        return ""
+    lines = ["## 天气预报", "", "| 日期 | 天气 | 气温 |", "| :--- | :--- | ---: |"]
+    for c in forecasts[:3]:
+        day_w = str(c.get("dayweather", "") or "")
+        night_w = str(c.get("nightweather", "") or "")
+        weather_text = day_w if not night_w or night_w == day_w else f"{day_w}转{night_w}"
+        day_t, night_t = c.get("daytemp", ""), c.get("nighttemp", "")
+        temp = f"{day_t}~{night_t}℃" if day_t and night_t else ""
+        lines.append(f"| {_short_date(c.get('date', ''))} | {weather_text} | {temp} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _md_day(day: dict) -> list[str]:
+    """一天：标题 + 三个时段 + 餐饮/住宿/提示。"""
+    n = day.get("day", "")
+    lines = [f"## 第 {n} 天", ""]
+
+    # date_hint 常与标题重复（都是"第N天"），只有提供额外信息时才单列
+    date_hint = str(day.get("date_hint", "") or "").strip()
+    if date_hint and date_hint not in (f"第{n}天", f"第 {n} 天"):
+        lines += [f"**{date_hint}**", ""]
+
+    for slot, label in SLOT_LABELS.items():
+        acts = day.get(slot) or []
+        if not acts:
+            continue
+        lines += [f"### {label}", ""]
+        for a in acts:
+            lines += _md_activity(a)
+        lines.append("")
+
+    meals = day.get("meals") or []
+    if meals:
+        lines += [f"**餐饮**：{'、'.join(str(m) for m in meals)}", ""]
+
+    lodging = str(day.get("lodging", "") or "").strip()
+    if lodging:
+        lines += [f"**住宿**：{lodging}", ""]
+
+    note = str(day.get("note", "") or "").strip()
+    if note:
+        lines += [f"> 提示：{note}", ""]
+
+    return lines
+
+
+def _md_activity(a: dict) -> list[str]:
+    """一个活动：加粗地名 + 费用，缩进列出说明/地址/营业时间/玩法。"""
+    place = str(a.get("place", "") or "").strip() or "待定地点"
+    cost = _parse_cost(a.get("cost"))
+    lines = [f"- **{place}**" + (f" — {cost}" if cost else "")]
+
+    desc = str(a.get("description", "") or "").strip()
+    if desc:
+        lines.append(f"  - {desc}")
+    for label, key in (("地址", "address"), ("营业时间", "open_time"), ("怎么玩", "play_guide")):
+        val = str(a.get(key, "") or "").strip()
+        if val:
+            lines.append(f"  - {label}：{val}")
+    return lines
+
+
+def _md_budget(split: dict, total: float) -> list[str]:
+    """预算拆分表格 + 合计。"""
+    lines = ["## 预算拆分", "", "| 项目 | 金额（元） |", "| :--- | ---: |"]
+    for key, label in BUDGET_LABELS.items():
+        lines.append(f"| {label} | {_to_float(split.get(key)):.0f} |")
+    lines += [
+        f"| **合计** | **{total:.0f}** |",
+        "",
+        "> 预算为模型估算，实际以出行消费为准",
+        "",
+    ]
+    return lines
