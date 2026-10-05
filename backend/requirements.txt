@@ -18,6 +18,7 @@ aiofiles>=24.0
 
 # ---------- RAG 向量库 ----------
 chromadb>=1.0
+langchain-chroma>=0.2   # app/rag/vector_db.py 的 Chroma 封装来源，勿漏
 
 # ---------- 缓存 ----------
 redis>=5.0

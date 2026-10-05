@@ -7,6 +7,8 @@
 .env
 .env.local
 *.local
+frontend/.env*
+!frontend/.env.example
 
 # ---------- Python 环境与缓存 ----------
 .venv/

@@ -2,6 +2,7 @@
 # RAG 链路测试（离线）
 # 覆盖：攻略目录、Markdown 切块、规则级查询改写、规则级重排、攻略候选提取、一致性校验
 # ============================================
+import pytest
 from langchain_core.documents import Document
 
 from app.agents.tools import rag_tool
@@ -87,11 +88,36 @@ class TestRuleScore:
 
 
 class TestFallbackCandidates:
-    def test_extract_from_real_guide(self):
+    FIELD_LABELS = {"地址", "门票参考", "简介", "提示", "大交通", "市内"}
+
+    def test_extract_from_real_guide_returns_spot_names(self):
         names = fallback_candidates.extract_from_guide("西安")
         assert names, "应能从西安攻略提取到候选地名"
         assert len(names) == len(set(names))  # 去重
         assert len(names) <= 15
+        # 必须是真实景点名，而不是「- 地址：…」这类字段被误抽出来
+        assert any("兵马俑" in n for n in names)
+        assert not (self.FIELD_LABELS & set(names))
+
+    @pytest.mark.parametrize("city", ["西安", "成都", "北京", "上海", "杭州", "重庆"])
+    def test_every_guide_yields_spot_names(self, city):
+        names = fallback_candidates.extract_from_guide(city)
+        assert len(names) >= 5, f"{city} 攻略应至少抽到 5 个景点"
+        assert not (self.FIELD_LABELS & set(names)), f"{city} 抽到了字段名：{self.FIELD_LABELS & set(names)}"
+
+    def test_heading_extraction_strips_parenthetical(self):
+        text = "## 必去景点\n\n### 故宫博物院（紫禁城）\n- 地址：东城区\n"
+        assert fallback_candidates._extract_heading_names(text, 15) == ["故宫博物院"]
+
+    def test_heading_extraction_respects_limit_and_dedup(self):
+        text = "### 甲地\n### 乙地\n### 甲地\n"
+        assert fallback_candidates._extract_heading_names(text, 1) == ["甲地"]
+        assert fallback_candidates._extract_heading_names(text, 15) == ["甲地", "乙地"]
+
+    def test_bullet_fallback_parses_name_colon_desc(self):
+        # 仅在攻略没有标题结构时才走这条兜底路径
+        text = "- 兵马俑：世界第八大奇迹\n- 华清宫——温泉遗址\n"
+        assert fallback_candidates._extract_bullet_names(text, 15) == ["兵马俑", "华清宫"]
 
     def test_unknown_city_returns_empty(self):
         assert fallback_candidates.extract_from_guide("大理") == []

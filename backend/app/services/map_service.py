@@ -81,6 +81,9 @@ def search_poi(keywords: str, city: str, poi_type: str = "", limit: int = 10) ->
                 "name": p.get("name", ""),
                 "type": p.get("type", ""),
                 "address": p.get("address", ""),
+                # 高德 place/text 不单独返回 formatted_address，这里用 address 兑现
+                # 调用方（enrich_activity）的字段契约，避免 KeyError
+                "formatted_address": p.get("address", ""),
                 "lng": lng,
                 "lat": lat,
                 "location": loc,
@@ -152,7 +155,8 @@ def enrich_activity(activity: dict, city: str) -> dict:
         return activity
     poi = pois[0]
     activity["poi_id"] = poi["poi_id"]
-    activity["address"] = poi["address"] or poi["formatted_address"]
+    # 用 .get 兜底：即使 POI 来源变了、缺字段也不该让整条行程生成崩掉
+    activity["address"] = poi.get("address") or poi.get("formatted_address", "")
     activity["image_url"] = poi["image_url"]
     activity["open_time"] = poi.get("open_time", "")  # 营业时间（真实值）
     activity["rating"] = poi.get("rating", "")        # 高德评分（真实值）

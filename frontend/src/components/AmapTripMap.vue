@@ -24,9 +24,10 @@ const mapRef = ref(null)
 let markers = [] // 已添加的标记（卸载时清理）
 let infoWindow = null
 
-// 高德 JS Key 与安全密钥（前端配置，与后端 .env 同步）
-const AMAP_KEY = '***REMOVED-AMAP-JS-KEY***'
-const AMAP_SECURITY_CODE = '***REMOVED-AMAP-SECURITY-CODE***'
+// 高德 JS Key 与安全密钥：从 Vite 环境变量注入（frontend/.env，模板见 frontend/.env.example）
+// 为什么不写死在源码里：本仓库是公开的，明文 Key + securityJsCode 会被人拿去消耗你的高德配额。
+const AMAP_KEY = import.meta.env.VITE_AMAP_JS_KEY
+const AMAP_SECURITY_CODE = import.meta.env.VITE_AMAP_SECURITY_CODE
 
 // 标记的紫色序号圆点样式（CSS 直接写进 content，随标记渲染）
 function markerHtml(index) {
@@ -40,6 +41,13 @@ function markerHtml(index) {
 }
 
 async function initMap() {
+  // 缺 Key 时明确报错并退出，避免加载器抛出难懂的异常
+  if (!AMAP_KEY) {
+    console.error(
+      '[AmapTripMap] 缺少 VITE_AMAP_JS_KEY：请复制 frontend/.env.example 为 frontend/.env 并填入高德 JS Key（改后需重启 dev server）',
+    )
+    return
+  }
   // 加载高德 JS API 2.0
   const AMap = await AMapLoader.load({
     key: AMAP_KEY,
