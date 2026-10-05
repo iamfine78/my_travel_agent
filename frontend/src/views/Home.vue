@@ -37,7 +37,7 @@
         <div style="flex: 2; min-width: 160px">
           <label>目的城市</label>
           <input v-model="form.destination" placeholder="如：大理、西安、成都" />
-          <!-- 热门城市快捷选择（前 6 个有本地攻略，大理走动态生成） -->
+          <!-- 热门城市快捷选择（14 城有本地攻略走 RAG，大理演示动态生成） -->
           <div style="margin-top: 6px">
             <span
               v-for="c in hotCities"
@@ -169,8 +169,11 @@ const previewUrl = ref(null)
 // 可选项
 const travelTags = ['自然风景', '拍照', '美食', '古镇', '休闲', '人文历史', '购物']
 const foodTags = ['少辣', '不吃香菜', '不吃葱', '素食', '清真', '海鲜']
-// 热门城市（西安/成都/北京/上海/杭州/重庆 有本地攻略，大理演示动态城市生成）
-const hotCities = ['大理', '西安', '成都', '北京', '上海', '杭州', '重庆']
+// 热门城市（14 城有本地攻略走 RAG，大理演示动态城市生成）
+const hotCities = [
+  '大理', '西安', '成都', '北京', '上海', '杭州', '重庆',
+  '南京', '苏州', '广州', '武汉', '长沙', '厦门', '青岛', '昆明',
+]
 
 const form = reactive({
   destination: '',
