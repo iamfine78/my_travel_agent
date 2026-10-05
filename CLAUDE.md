@@ -32,7 +32,16 @@ npm run build          # 生产构建
 .venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 ```
 
-**测试与评估**：`backend/tests/` 为空，项目**没有 pytest 套件**。实际验证靠 `backend/scripts/` 下的独立脚本，直接运行即可（多为 `TestClient` 打真实接口，`test_m*.py` 会消耗 LLM 额度）：
+**测试**：`backend/tests/` 是 **pytest 离线单元/接口测试套件**（114 例，约 4 秒），全部不依赖网络 / LLM / Redis，用 `monkeypatch` 顶替外部依赖、用临时 SQLite 顶替真实库：
+
+```bash
+.venv/Scripts/python.exe -X utf8 -m pytest backend -q                       # 全量离线测试
+$env:RUN_LIVE_TESTS=1; .venv/Scripts/python.exe -X utf8 -m pytest backend -m live   # 真实 LLM/高德集成测试
+```
+
+`conftest.py` 提供四个夹具：`sample_itinerary`（最小行程）、`tmp_storage`（临时 SQLite 且替换 `storage_service` 全局 engine/SessionLocal）、`fake_cache`（内存假 Redis）、`client`（已接临时库的 TestClient）。
+
+**注意**：`backend/scripts/test_m*.py` 是里程碑验证脚本，**import 即执行**，不是 pytest 用例 —— `pytest.ini` 的 `norecursedirs` 已排除 `scripts/`，否则收集阶段就会触发 `SystemExit`。这些脚本多为 `TestClient` 打真实接口，`test_m*.py` 会消耗 LLM 额度：
 
 ```bash
 .venv/Scripts/python.exe -X utf8 backend/scripts/test_m2.py            # 按里程碑划分的端到端脚本 test_m1..m5 / test_m2_edit

@@ -108,9 +108,16 @@ cd frontend && npm run build
 
 # RAG 检索效果评估（Top1/TopK 命中率、MRR、Noise Rate、跨城市污染）
 .venv/Scripts/python.exe -X utf8 backend/scripts/evaluate_rag_retrieval.py --limit 3
+
+# 后端单元/接口测试（pytest，离线，无需任何 Key）
+.venv/Scripts/python.exe -X utf8 -m pytest backend -q
+
+# 真实 LLM/高德集成测试（默认跳过，会消耗额度）
+RUN_LIVE_TESTS=1 .venv/Scripts/python.exe -X utf8 -m pytest backend -m live
 ```
 
-> 项目暂无 pytest 套件，`backend/tests/` 为空；实际验证靠 `backend/scripts/` 下可直接运行的脚本。
+> `backend/tests/` 为 pytest 测试套件（离线，用 monkeypatch / 临时 SQLite / 假 Redis 隔离外部依赖）；
+> `backend/scripts/` 下的 `test_m*.py` 是「直接运行」的里程碑验证脚本，不是 pytest 用例。
 
 ## API 概览
 
