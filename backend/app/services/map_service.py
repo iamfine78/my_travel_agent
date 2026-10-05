@@ -20,7 +20,15 @@ def _amap_get(endpoint: str, params: dict) -> dict:
     params["key"] = settings.AMAP_WEB_KEY
     resp = httpx.get(f"{settings.AMAP_BASE_URL}/{endpoint}", params=params, timeout=20)
     resp.raise_for_status()
-    return resp.json()
+    data = resp.json()
+    # 高德用 HTTP 200 + status="0" 表达业务错误（Key 无效、配额超限、参数错）。
+    # 不检查的话，「配额用完了」会被静默当成「这里没有数据」——搜出来 0 个 POI、
+    # 行程里所有地点被防幻觉校验删光，用户完全不知道为什么。
+    if data.get("status") != "1":
+        raise RuntimeError(
+            f"高德业务错误 endpoint={endpoint} status={data.get('status')!r} info={data.get('info')!r}"
+        )
+    return data
 
 
 # ---------- 1. 地理编码 ----------
@@ -98,7 +106,11 @@ def search_poi(keywords: str, city: str, poi_type: str = "", limit: int = 10) ->
                 "adcode": p.get("adcode", ""),  # 行政区划编码（跨城过滤用）
             }
         )
-    cache_service.cache_set(cache_key, result, ttl=MAP_TTL)
+    # 只缓存有结果的查询：空结果往往是限流/数据异常造成的，一旦写进缓存
+    # 就会在整个 TTL 内把「兵马俑查不到」这类错误持续放大
+    # （实测踩到过：18 条空结果被缓存成"该地点不存在"）
+    if result:
+        cache_service.cache_set(cache_key, result, ttl=MAP_TTL)
     return result
 
 

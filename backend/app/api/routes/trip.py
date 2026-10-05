@@ -6,6 +6,7 @@
 # ============================================
 from fastapi import APIRouter, HTTPException
 
+from app.core.errors import UpstreamServiceError
 from app.models.schemas import (
     PlanResponse,
     TripEditRequest,
@@ -51,7 +52,11 @@ def refresh_trip(trip_id: str):
         raise HTTPException(status_code=404, detail="行程不存在")
 
     itinerary = storage_service.to_record_out(record)["itinerary"]
-    enriched = map_service.enrich_itinerary(itinerary, record.destination)
+    try:
+        enriched = map_service.enrich_itinerary(itinerary, record.destination)
+    except Exception as e:
+        # 补全就是这个接口的全部目的：失败要说清楚，不能返回一份没变的行程假装成功
+        raise UpstreamServiceError(f"高德服务暂时不可用，补全失败：{e}") from e
     updated = storage_service.update_trip(trip_id, enriched)
     return storage_service.to_record_out(updated)
 

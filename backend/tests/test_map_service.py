@@ -2,7 +2,9 @@
 # 地图服务测试（离线）
 # 覆盖：POI 返回契约、缺字段容错（曾因 formatted_address 缺键 KeyError）
 # ============================================
-from app.services import map_service
+import pytest
+
+from app.services import map_service, weather_service
 
 
 def _fake_poi(**overrides) -> dict:
@@ -22,6 +24,54 @@ def _fake_poi(**overrides) -> dict:
     }
     poi.update(overrides)
     return poi
+
+
+class TestAmapBusinessErrors:
+    """回归：高德用 HTTP 200 + status="0" 表达业务错误（Key 无效、配额超限），
+    不检查业务状态位就会把「配额用完了」静默当成「这里没有数据」。"""
+
+    class _Resp:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._payload
+
+    @pytest.mark.parametrize("payload", [
+        {"status": "0", "info": "INVALID_USER_KEY"},
+        {"status": "0", "info": "DAILY_QUERY_OVER_LIMIT"},
+        {"info": "OK"},                       # 缺 status 字段
+    ])
+    @pytest.mark.parametrize("module", [map_service, weather_service])
+    def test_business_error_raises(self, monkeypatch, module, payload):
+        monkeypatch.setattr(module.httpx, "get", lambda *a, **k: self._Resp(payload))
+        with pytest.raises(RuntimeError, match="高德业务错误"):
+            module._amap_get("place/text", {})
+
+    @pytest.mark.parametrize("module", [map_service, weather_service])
+    def test_success_passes_through(self, monkeypatch, module):
+        payload = {"status": "1", "pois": []}
+        monkeypatch.setattr(module.httpx, "get", lambda *a, **k: self._Resp(payload))
+        assert module._amap_get("place/text", {})["status"] == "1"
+
+
+class TestSearchPoiCaching:
+    """回归：空结果曾被写进缓存，把「兵马俑查不到」这种错误放大到整个 TTL。"""
+
+    def test_empty_result_is_not_cached(self, monkeypatch, fake_cache):
+        monkeypatch.setattr(map_service, "_amap_get", lambda *a, **k: {"status": "1", "pois": []})
+        assert map_service.search_poi("查不到的地点", "测试城", limit=1) == []
+        assert not [k for k in fake_cache.store if "查不到的地点" in k], "空结果不应进缓存"
+
+    def test_non_empty_result_is_cached(self, monkeypatch, fake_cache):
+        raw = [{"id": "P1", "name": "某景点", "address": "a", "location": "1,2",
+                "photos": [], "biz_ext": {}}]
+        monkeypatch.setattr(map_service, "_amap_get", lambda *a, **k: {"status": "1", "pois": raw})
+        assert map_service.search_poi("某景点", "测试城", limit=1)
+        assert [k for k in fake_cache.store if "某景点" in k], "有结果时应缓存"
 
 
 class TestSearchPoiContract:

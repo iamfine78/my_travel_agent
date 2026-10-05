@@ -37,3 +37,9 @@ class ItineraryGenerationError(PlanningError):
     """LLM 多次输出仍无法解析成合法行程 —— 上游能力故障，不是用户的错。"""
 
     status_code = 502
+
+
+class UpstreamServiceError(PlanningError):
+    """依赖的外部服务（高德等）暂时不可用 —— 不是用户输入的问题，可稍后重试。"""
+
+    status_code = 502

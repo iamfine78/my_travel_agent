@@ -58,6 +58,20 @@ class TestTripCrud:
     def test_refresh_missing_trip_returns_404(self, client):
         assert client.post("/api/trip/不存在/refresh").status_code == 404
 
+    def test_refresh_maps_amap_failure_to_502(self, client, monkeypatch):
+        """补全失败要说清楚，不能返回一份没变的行程假装成功。"""
+        from app.services import map_service
+
+        trip_id = _save(client).json()["trip_id"]
+
+        def boom(*a, **k):
+            raise RuntimeError("高德挂了")
+
+        monkeypatch.setattr(map_service, "enrich_itinerary", boom)
+        r = client.post(f"/api/trip/{trip_id}/refresh")
+        assert r.status_code == 502
+        assert "高德服务暂时不可用" in r.json()["detail"]
+
 
 class TestHistoryTotal:
     def test_total_is_real_count_not_page_size(self, client):

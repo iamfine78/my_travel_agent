@@ -15,6 +15,7 @@ class TestErrorTypes:
             (errors.UnsupportedDestinationError, 400),
             (errors.TripNotFoundError, 404),
             (errors.ItineraryGenerationError, 502),
+            (errors.UpstreamServiceError, 502),
         ],
     )
     def test_status_code_contract(self, exc_cls, expected_status):

@@ -20,11 +20,20 @@ WEATHER_TTL = 3 * 3600  # 天气缓存 3 小时
 
 
 def _amap_get(endpoint: str, params: dict) -> dict:
-    """高德 Web 服务统一请求封装。"""
+    """高德 Web 服务统一请求封装。
+
+    注意：高德用 HTTP 200 + status="0" 表达业务错误（Key 无效、配额超限），
+    必须检查业务状态位，否则「配额用完」会被静默当成「查不到天气」。
+    """
     params["key"] = settings.AMAP_WEB_KEY
     resp = httpx.get(f"{settings.AMAP_BASE_URL}/{endpoint}", params=params, timeout=20)
     resp.raise_for_status()
-    return resp.json()
+    data = resp.json()
+    if data.get("status") != "1":
+        raise RuntimeError(
+            f"高德业务错误 endpoint={endpoint} status={data.get('status')!r} info={data.get('info')!r}"
+        )
+    return data
 
 
 def get_adcode(city: str) -> str | None:

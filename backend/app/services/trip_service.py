@@ -64,6 +64,7 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
     # 2. 按等级准备生成上下文（攻略片段 / 候选池 / 空）
     context, sources = extra_context, []
     mode = "settled"
+    pool: dict = {}   # 仅 B 级会填充；第 4 步用它做池外校验
     if level == "A":
         mode = "settled"
         user_query = f"{city} 旅行 {req.preferences} {req.days}天"
@@ -80,11 +81,20 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
         logger.info(f"A 级 RAG：city={city} 召回 {len(hits)} 条")
     elif level == "B":
         mode = "dynamic"
-        pool = place_candidate_service.get_candidates(city, resolved.get("adcode", ""))
-        context = place_candidate_service.format_candidates(pool)
-        total = sum(len(v) for v in pool.values())
-        sources = [f"{city}高德候选池（{total} 个真实地点）"]
-        logger.info(f"B 级动态：city={city} 候选池 {total} 个")
+        try:
+            pool = place_candidate_service.get_candidates(city, resolved.get("adcode", ""))
+        except Exception as e:
+            # 候选池拿不到 → POI ID 白名单约束不复存在，降级为通用知识生成并如实标注
+            # （mode 同时用作第 4 步的开关：非 dynamic 时不做池外校验，否则会把行程清空）
+            mode = "fallback"
+            pool = {}
+            sources = [f"{city}高德候选池获取失败，改用通用知识生成（地点未校验）"]
+            logger.warning(f"B 级候选池获取失败，降级为通用知识: {e}")
+        else:
+            context = place_candidate_service.format_candidates(pool)
+            total = sum(len(v) for v in pool.values())
+            sources = [f"{city}高德候选池（{total} 个真实地点）"]
+            logger.info(f"B 级动态：city={city} 候选池 {total} 个")
     else:  # C 级：资料不足
         mode = "fallback"
         sources = [f"{city}（{reason}，使用通用知识生成）"]
@@ -94,14 +104,27 @@ def plan_trip(req: TripPlanRequest, extra_context: str = "") -> PlanResponse:
     itinerary = planner_agent.plan_trip(req, extra_context=context, mode=mode)
 
     # 4. B 级：池外 ID 校验拒绝（防幻觉核心）
-    if level == "B":
+    #    仅在候选池真的拿到了才校验：池子为空时校验会把行程清空
+    if level == "B" and mode == "dynamic":
         itinerary, stats = _validate_pool(itinerary, pool)
         if stats["replaced"] or stats["removed"]:
             sources.append(f"候选校验：替换 {stats['replaced']} 个、移除 {stats['removed']} 个池外地点")
 
     # 5. 高德补全（坐标/地址/图片）+ 天气
-    itinerary = map_service.enrich_itinerary(itinerary, city)
-    weather = weather_service.get_weather(city)
+    #    这两步是"锦上添花"：外部服务失败时保留 LLM 原始输出即可，
+    #    不该让整个规划请求 500（与 Redis / 精排的降级策略保持一致）
+    try:
+        itinerary = map_service.enrich_itinerary(itinerary, city)
+    except Exception as e:
+        sources.append("高德地理信息补全失败，坐标/图片可能缺失")
+        logger.warning(f"高德补全失败，跳过: {e}")
+
+    weather = None
+    try:
+        weather = weather_service.get_weather(city)
+    except Exception as e:
+        sources.append("天气获取失败")
+        logger.warning(f"天气获取失败，跳过: {e}")
 
     # 天气感知修正：把天气提示注入行程建议
     if weather and weather.get("forecasts"):
