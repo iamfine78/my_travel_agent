@@ -18,7 +18,7 @@
     "expected_terms": [
       "肉夹馍",
       "回民街",
-      "凉皮"
+      "甑糕"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "expected_terms": [
       "熊猫",
       "宽窄巷子",
-      "两日"
+      "春熙路"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "expected_terms": [
       "龙井",
       "东坡肉",
-      "杭帮菜"
+      "楼外楼"
     ]
   },
   {
@@ -502,6 +502,687 @@
       "洪崖洞",
       "李子坝",
       "解放碑"
+    ]
+  },
+  {
+    "id": "nanjing-1",
+    "city": "南京",
+    "category": "景点",
+    "query": "南京有哪些必去的景点？",
+    "expected_terms": [
+      "中山陵",
+      "明孝陵",
+      "总统府"
+    ]
+  },
+  {
+    "id": "nanjing-2",
+    "city": "南京",
+    "category": "美食",
+    "query": "南京有什么地道小吃和美食街推荐？",
+    "expected_terms": [
+      "盐水鸭",
+      "鸭血粉丝汤",
+      "牛肉锅贴"
+    ]
+  },
+  {
+    "id": "nanjing-3",
+    "city": "南京",
+    "category": "行程",
+    "query": "南京三天人文行程怎么安排？",
+    "expected_terms": [
+      "中山陵",
+      "夫子庙",
+      "博物院"
+    ]
+  },
+  {
+    "id": "nanjing-4",
+    "city": "南京",
+    "category": "景点",
+    "query": "钟山风景区中山陵和明孝陵怎么安排？",
+    "expected_terms": [
+      "中山陵",
+      "明孝陵"
+    ]
+  },
+  {
+    "id": "nanjing-5",
+    "city": "南京",
+    "category": "景点",
+    "query": "南京博物院需要提前预约吗？",
+    "expected_terms": [
+      "南京博物院",
+      "预约"
+    ]
+  },
+  {
+    "id": "nanjing-6",
+    "city": "南京",
+    "category": "美食",
+    "query": "南京鸭血粉丝汤和牛肉锅贴哪家好？",
+    "expected_terms": [
+      "鸭血粉丝汤",
+      "牛肉锅贴"
+    ]
+  },
+  {
+    "id": "nanjing-7",
+    "city": "南京",
+    "category": "美食",
+    "query": "南京有哪些小吃适合晚上在夫子庙吃？",
+    "expected_terms": [
+      "梅花糕",
+      "糖芋苗",
+      "夫子庙"
+    ]
+  },
+  {
+    "id": "nanjing-8",
+    "city": "南京",
+    "category": "行程",
+    "query": "南京两天精华路线怎么走？",
+    "expected_terms": [
+      "总统府",
+      "秦淮河",
+      "玄武湖"
+    ]
+  },
+  {
+    "id": "suzhou-1",
+    "city": "苏州",
+    "category": "景点",
+    "query": "苏州园林有哪些，哪个最值得去？",
+    "expected_terms": [
+      "拙政园",
+      "留园",
+      "虎丘"
+    ]
+  },
+  {
+    "id": "suzhou-2",
+    "city": "苏州",
+    "category": "美食",
+    "query": "苏州有什么特色美食和小吃？",
+    "expected_terms": [
+      "松鼠桂鱼",
+      "生煎",
+      "糖粥"
+    ]
+  },
+  {
+    "id": "suzhou-3",
+    "city": "苏州",
+    "category": "行程",
+    "query": "苏州两天精华怎么安排？",
+    "expected_terms": [
+      "拙政园",
+      "平江路",
+      "金鸡湖"
+    ]
+  },
+  {
+    "id": "suzhou-4",
+    "city": "苏州",
+    "category": "景点",
+    "query": "苏州博物馆值得去吗，要预约吗？",
+    "expected_terms": [
+      "苏州博物馆",
+      "预约"
+    ]
+  },
+  {
+    "id": "suzhou-5",
+    "city": "苏州",
+    "category": "景点",
+    "query": "苏州周边水乡古镇去哪个好？",
+    "expected_terms": [
+      "周庄",
+      "同里",
+      "木渎"
+    ]
+  },
+  {
+    "id": "suzhou-6",
+    "city": "苏州",
+    "category": "美食",
+    "query": "苏州有什么必吃的苏帮菜？",
+    "expected_terms": [
+      "松鼠桂鱼",
+      "响油鳝糊",
+      "樱桃肉"
+    ]
+  },
+  {
+    "id": "suzhou-7",
+    "city": "苏州",
+    "category": "美食",
+    "query": "苏州秋天有什么时令美食？",
+    "expected_terms": [
+      "阳澄湖大闸蟹",
+      "鸡头米"
+    ]
+  },
+  {
+    "id": "suzhou-8",
+    "city": "苏州",
+    "category": "行程",
+    "query": "苏州一天半的行程怎么排？",
+    "expected_terms": [
+      "拙政园",
+      "虎丘",
+      "山塘街"
+    ]
+  },
+  {
+    "id": "guangzhou-1",
+    "city": "广州",
+    "category": "景点",
+    "query": "广州有哪些必打卡的景点？",
+    "expected_terms": [
+      "广州塔",
+      "陈家祠",
+      "越秀公园"
+    ]
+  },
+  {
+    "id": "guangzhou-2",
+    "city": "广州",
+    "category": "美食",
+    "query": "广州早茶和烧腊有什么推荐？",
+    "expected_terms": [
+      "早茶",
+      "烧鹅",
+      "煲仔饭"
+    ]
+  },
+  {
+    "id": "guangzhou-3",
+    "city": "广州",
+    "category": "行程",
+    "query": "广州三天经典行程怎么安排？",
+    "expected_terms": [
+      "广州塔",
+      "沙面",
+      "珠江夜游"
+    ]
+  },
+  {
+    "id": "guangzhou-4",
+    "city": "广州",
+    "category": "景点",
+    "query": "广州塔几点登塔看夜景最好？",
+    "expected_terms": [
+      "广州塔",
+      "夜景"
+    ]
+  },
+  {
+    "id": "guangzhou-5",
+    "city": "广州",
+    "category": "景点",
+    "query": "带孩子去广州玩什么比较好？",
+    "expected_terms": [
+      "长隆",
+      "白云山"
+    ]
+  },
+  {
+    "id": "guangzhou-6",
+    "city": "广州",
+    "category": "美食",
+    "query": "广州早茶有什么必点？",
+    "expected_terms": [
+      "虾饺",
+      "肠粉",
+      "凤爪"
+    ]
+  },
+  {
+    "id": "guangzhou-7",
+    "city": "广州",
+    "category": "美食",
+    "query": "广州糖水有什么推荐？",
+    "expected_terms": [
+      "双皮奶",
+      "杨枝甘露"
+    ]
+  },
+  {
+    "id": "guangzhou-8",
+    "city": "广州",
+    "category": "行程",
+    "query": "广州两天美食主题行程怎么排？",
+    "expected_terms": [
+      "陈家祠",
+      "沙面",
+      "上下九"
+    ]
+  },
+  {
+    "id": "wuhan-1",
+    "city": "武汉",
+    "category": "景点",
+    "query": "武汉有哪些必去的景点？",
+    "expected_terms": [
+      "黄鹤楼",
+      "湖北省博物馆",
+      "东湖"
+    ]
+  },
+  {
+    "id": "wuhan-2",
+    "city": "武汉",
+    "category": "美食",
+    "query": "武汉过早有什么特色？",
+    "expected_terms": [
+      "热干面",
+      "豆皮",
+      "面窝"
+    ]
+  },
+  {
+    "id": "wuhan-3",
+    "city": "武汉",
+    "category": "行程",
+    "query": "武汉三天经典行程怎么安排？",
+    "expected_terms": [
+      "黄鹤楼",
+      "江汉路",
+      "长江大桥"
+    ]
+  },
+  {
+    "id": "wuhan-4",
+    "city": "武汉",
+    "category": "景点",
+    "query": "湖北省博物馆越王勾践剑值得看吗？",
+    "expected_terms": [
+      "越王勾践剑",
+      "湖北省博物馆"
+    ]
+  },
+  {
+    "id": "wuhan-5",
+    "city": "武汉",
+    "category": "景点",
+    "query": "武汉长江大桥可以步行过桥吗？",
+    "expected_terms": [
+      "武汉长江大桥",
+      "步行"
+    ]
+  },
+  {
+    "id": "wuhan-6",
+    "city": "武汉",
+    "category": "美食",
+    "query": "武汉早餐除了热干面还有什么？",
+    "expected_terms": [
+      "糊汤粉",
+      "糯米包油条"
+    ]
+  },
+  {
+    "id": "wuhan-7",
+    "city": "武汉",
+    "category": "美食",
+    "query": "武汉有什么特色菜？",
+    "expected_terms": [
+      "武昌鱼",
+      "排骨藕汤",
+      "鸭脖"
+    ]
+  },
+  {
+    "id": "wuhan-8",
+    "city": "武汉",
+    "category": "行程",
+    "query": "武汉两天怎么安排不赶？",
+    "expected_terms": [
+      "黄鹤楼",
+      "户部巷",
+      "东湖"
+    ]
+  },
+  {
+    "id": "changsha-1",
+    "city": "长沙",
+    "category": "景点",
+    "query": "长沙有哪些必去的景点？",
+    "expected_terms": [
+      "岳麓山",
+      "橘子洲",
+      "湖南省博物馆"
+    ]
+  },
+  {
+    "id": "changsha-2",
+    "city": "长沙",
+    "category": "美食",
+    "query": "长沙有什么必吃的小吃？",
+    "expected_terms": [
+      "臭豆腐",
+      "糖油粑粑",
+      "口味虾"
+    ]
+  },
+  {
+    "id": "changsha-3",
+    "city": "长沙",
+    "category": "行程",
+    "query": "长沙两天精华怎么安排？",
+    "expected_terms": [
+      "岳麓山",
+      "橘子洲",
+      "太平街"
+    ]
+  },
+  {
+    "id": "changsha-4",
+    "city": "长沙",
+    "category": "景点",
+    "query": "湖南省博物馆辛追夫人值得看吗？",
+    "expected_terms": [
+      "辛追夫人",
+      "湖南省博物馆"
+    ]
+  },
+  {
+    "id": "changsha-5",
+    "city": "长沙",
+    "category": "景点",
+    "query": "长沙夜景去哪看比较好？",
+    "expected_terms": [
+      "橘子洲",
+      "五一广场"
+    ]
+  },
+  {
+    "id": "changsha-6",
+    "city": "长沙",
+    "category": "美食",
+    "query": "长沙湘菜有什么推荐？",
+    "expected_terms": [
+      "剁椒鱼头",
+      "辣椒炒肉",
+      "口味虾"
+    ]
+  },
+  {
+    "id": "changsha-7",
+    "city": "长沙",
+    "category": "美食",
+    "query": "长沙本土茶饮有什么推荐？",
+    "expected_terms": [
+      "茶颜悦色",
+      "幽兰拿铁"
+    ]
+  },
+  {
+    "id": "changsha-8",
+    "city": "长沙",
+    "category": "行程",
+    "query": "长沙周末两日游怎么规划？",
+    "expected_terms": [
+      "岳麓书院",
+      "太平街",
+      "坡子街"
+    ]
+  },
+  {
+    "id": "xiamen-1",
+    "city": "厦门",
+    "category": "景点",
+    "query": "厦门有哪些必去的景点？",
+    "expected_terms": [
+      "鼓浪屿",
+      "环岛路",
+      "南普陀寺"
+    ]
+  },
+  {
+    "id": "xiamen-2",
+    "city": "厦门",
+    "category": "美食",
+    "query": "厦门有什么特色小吃？",
+    "expected_terms": [
+      "沙茶面",
+      "土笋冻",
+      "海蛎煎"
+    ]
+  },
+  {
+    "id": "xiamen-3",
+    "city": "厦门",
+    "category": "行程",
+    "query": "厦门三天慢节奏怎么玩？",
+    "expected_terms": [
+      "鼓浪屿",
+      "环岛路",
+      "中山路"
+    ]
+  },
+  {
+    "id": "xiamen-4",
+    "city": "厦门",
+    "category": "景点",
+    "query": "去鼓浪屿要坐船吗？",
+    "expected_terms": [
+      "鼓浪屿",
+      "轮渡"
+    ]
+  },
+  {
+    "id": "xiamen-5",
+    "city": "厦门",
+    "category": "景点",
+    "query": "厦门大学能进去参观吗？",
+    "expected_terms": [
+      "厦门大学",
+      "预约"
+    ]
+  },
+  {
+    "id": "xiamen-6",
+    "city": "厦门",
+    "category": "美食",
+    "query": "厦门海鲜去哪吃比较地道？",
+    "expected_terms": [
+      "八市",
+      "酱油水海鲜"
+    ]
+  },
+  {
+    "id": "xiamen-7",
+    "city": "厦门",
+    "category": "美食",
+    "query": "厦门有什么本地特色小吃？",
+    "expected_terms": [
+      "花生汤",
+      "满煎糕",
+      "芋包"
+    ]
+  },
+  {
+    "id": "xiamen-8",
+    "city": "厦门",
+    "category": "行程",
+    "query": "厦门两天精华怎么安排？",
+    "expected_terms": [
+      "鼓浪屿",
+      "南普陀",
+      "集美学村"
+    ]
+  },
+  {
+    "id": "qingdao-1",
+    "city": "青岛",
+    "category": "景点",
+    "query": "青岛有哪些必去的景点？",
+    "expected_terms": [
+      "栈桥",
+      "八大关",
+      "崂山"
+    ]
+  },
+  {
+    "id": "qingdao-2",
+    "city": "青岛",
+    "category": "美食",
+    "query": "青岛有什么特色美食？",
+    "expected_terms": [
+      "辣炒蛤蜊",
+      "鲅鱼水饺",
+      "青岛啤酒"
+    ]
+  },
+  {
+    "id": "qingdao-3",
+    "city": "青岛",
+    "category": "行程",
+    "query": "青岛三天经典行程怎么安排？",
+    "expected_terms": [
+      "栈桥",
+      "八大关",
+      "五四广场"
+    ]
+  },
+  {
+    "id": "qingdao-4",
+    "city": "青岛",
+    "category": "景点",
+    "query": "青岛老城欧式建筑去哪看？",
+    "expected_terms": [
+      "八大关",
+      "天主教堂"
+    ]
+  },
+  {
+    "id": "qingdao-5",
+    "city": "青岛",
+    "category": "景点",
+    "query": "青岛哪里能下海游泳？",
+    "expected_terms": [
+      "金沙滩",
+      "第一海水浴场"
+    ]
+  },
+  {
+    "id": "qingdao-6",
+    "city": "青岛",
+    "category": "美食",
+    "query": "青岛啤酒文化去哪里体验？",
+    "expected_terms": [
+      "青岛啤酒博物馆",
+      "原浆"
+    ]
+  },
+  {
+    "id": "qingdao-7",
+    "city": "青岛",
+    "category": "美食",
+    "query": "青岛海鲜怎么吃最地道？",
+    "expected_terms": [
+      "辣炒蛤蜊",
+      "海鲜全家福"
+    ]
+  },
+  {
+    "id": "qingdao-8",
+    "city": "青岛",
+    "category": "行程",
+    "query": "青岛两天怎么安排看海和啤酒？",
+    "expected_terms": [
+      "崂山",
+      "八大关",
+      "啤酒博物馆"
+    ]
+  },
+  {
+    "id": "kunming-1",
+    "city": "昆明",
+    "category": "景点",
+    "query": "昆明有哪些必去的景点？",
+    "expected_terms": [
+      "石林",
+      "滇池",
+      "翠湖"
+    ]
+  },
+  {
+    "id": "kunming-2",
+    "city": "昆明",
+    "category": "美食",
+    "query": "昆明有什么特色美食？",
+    "expected_terms": [
+      "过桥米线",
+      "汽锅鸡",
+      "鲜花饼"
+    ]
+  },
+  {
+    "id": "kunming-3",
+    "city": "昆明",
+    "category": "行程",
+    "query": "昆明两天精华怎么安排？",
+    "expected_terms": [
+      "石林",
+      "滇池",
+      "翠湖"
+    ]
+  },
+  {
+    "id": "kunming-4",
+    "city": "昆明",
+    "category": "景点",
+    "query": "昆明冬天有什么看点？",
+    "expected_terms": [
+      "海埂大坝",
+      "红嘴鸥",
+      "翠湖"
+    ]
+  },
+  {
+    "id": "kunming-5",
+    "city": "昆明",
+    "category": "景点",
+    "query": "昆明周边的喀斯特地貌去哪看？",
+    "expected_terms": [
+      "石林",
+      "喀斯特"
+    ]
+  },
+  {
+    "id": "kunming-6",
+    "city": "昆明",
+    "category": "美食",
+    "query": "昆明米线有什么讲究？",
+    "expected_terms": [
+      "过桥米线",
+      "小锅米线"
+    ]
+  },
+  {
+    "id": "kunming-7",
+    "city": "昆明",
+    "category": "美食",
+    "query": "昆明有什么云南特色小吃？",
+    "expected_terms": [
+      "野生菌火锅",
+      "鲜花饼",
+      "烧饵块"
+    ]
+  },
+  {
+    "id": "kunming-8",
+    "city": "昆明",
+    "category": "行程",
+    "query": "昆明作为云南中转怎么安排？",
+    "expected_terms": [
+      "滇池",
+      "石林",
+      "西山龙门"
     ]
   }
 ]

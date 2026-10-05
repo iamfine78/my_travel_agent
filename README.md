@@ -37,7 +37,7 @@ pythonProject2/
 │   │   ├── core/         # 业务异常体系（PlanningError 及子类）
 │   │   └── config.py     # 全局配置（读 .env）
 │   ├── data/             # 14 城攻略 md、检索规则、Chroma / SQLite（运行时生成）
-│   ├── eval/             # RAG 评估集（48 条）与指标说明
+│   ├── eval/             # RAG 评估集（112 条）与指标说明
 │   ├── tests/            # pytest 离线测试套件（218 例）
 │   └── scripts/          # 入库、探针、调试、评估脚本（索引见 scripts/README.md）
 ├── frontend/src/         # Home / Result / History 三页面 + 高德地图组件
@@ -126,7 +126,7 @@ cd frontend && npm run build
 # 里程碑端到端验证脚本（会调用真实 LLM）
 .venv/Scripts/python.exe -X utf8 backend/scripts/test_m2.py
 
-# RAG 检索效果评估（48 条用例；指标口径见 backend/eval/README.md）
+# RAG 检索效果评估（112 条用例；指标口径见 backend/eval/README.md）
 .venv/Scripts/python.exe -X utf8 backend/scripts/evaluate_rag_retrieval.py --limit 3
 
 # 启用专用精排后再跑一次做对比（RERANK_MODEL 留空则退回 LLM 打分）
