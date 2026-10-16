@@ -1,4 +1,4 @@
-# ============================================
+﻿# ============================================
 # 智能旅行规划系统 · 本地启动脚本（Windows PowerShell）
 # 用法：powershell -ExecutionPolicy Bypass -File start.ps1
 # 功能：1) 确保 Redis 在跑  2) 校验高德 Key  3) 启动后端 uvicorn

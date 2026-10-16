@@ -2,11 +2,10 @@
 # 智能旅行规划系统 · 全局配置
 # 作用：集中读取 .env 中的环境变量，供全项目使用
 # 原理：python-dotenv 把 .env 文件内容加载进 os.environ，
-#       再用 os.getenv("KEY", 默认值) 读取，缺省给兜底默认值
+# 再用 os.getenv("KEY", 默认值) 读取，缺省给兜底默认值
 # ============================================
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
 
 # BASE_DIR = backend/ 目录（本文件在 backend/app/config.py，向上两级）
